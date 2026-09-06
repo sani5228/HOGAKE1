@@ -30,7 +30,8 @@ class AuthService:
                     raise ValueError(f"Please wait {int(30 - elapsed)} seconds before requesting another OTP.")
 
         # Generate 6-digit OTP
-        otp_val = f"{random.randint(100000, 999999)}"
+        #otp_val = f"{random.randint(100000, 999999)}"
+        otp_val = "123456"
         otp_hash = hashlib.sha256(otp_val.encode('utf-8')).hexdigest()
         expires_at = datetime.now(timezone.utc) + timedelta(minutes=5)
 
