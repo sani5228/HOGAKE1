@@ -115,13 +115,17 @@ class AuthService:
                 "name": farmer.name,
                 "mobile": clean_mobile
             })
+        
+            farmer_data = farmer.to_dict(mask_aadhaar=True)
+            farmer_data["role"] = "farmer"
+        
             return {
                 "verified": True,
                 "is_registered": True,
                 "token": token,
                 "role": "farmer",
-                "farmer": farmer.to_dict(mask_aadhaar=True)
-            }
+                "farmer": farmer_data
+            }            
         else:
             # Verified but not yet registered
             temp_token = create_jwt_token({
