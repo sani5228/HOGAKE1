@@ -5,6 +5,8 @@ from flask_cors import CORS
 
 from backend.config import Config
 from backend.database import init_db, SessionLocal
+from backend.database import init_db, SessionLocal
+from backend.models.user import AdminUser
 from backend.utils.responses import error_response
 
 # Import Blueprints
@@ -27,13 +29,30 @@ def create_app():
     # Enable CORS
     CORS(app, origins=Config.CORS_ORIGINS, supports_credentials=True)
 
-    # Initialize Database Schema
+        # Initialize Database Schema + Seed Demo Data
     with app.app_context():
         try:
             init_db()
+    
+            # Seed the complete demo dataset only when the database is empty.
+            # This prevents the seed script from deleting existing data on restart.
+            db = SessionLocal()
+    
+            try:
+                admin_exists = db.query(AdminUser).first() is not None
+    
+                if not admin_exists:
+                    print("🌱 Empty database detected. Loading complete demo dataset...")
+                    from backend.seed import seed_database
+                    seed_database()
+                    print("✅ Complete demo dataset loaded successfully.")
+                else:
+                    print("✅ Existing database detected. Skipping demo seed.")
+            finally:
+                db.close()
+    
         except Exception as e:
-            print(f"[Warning] Database auto-init error: {e}")
-
+            print(f"[Warning] Database initialization/seeding error: {e}")
     # Register Blueprints
     app.register_blueprint(auth_bp)
     app.register_blueprint(farmer_bp)
