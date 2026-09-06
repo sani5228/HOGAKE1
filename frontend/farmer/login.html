@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FASAL — Farmer Login</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<div class="sun"></div>
+<svg class="field-rows" viewBox="0 0 1440 400" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M0,400 L0,220 Q360,160 720,220 T1440,220 L1440,400 Z" fill="#B7C68A" opacity="0.55"/>
+  <path d="M0,400 L0,270 Q360,230 720,270 T1440,270 L1440,400 Z" fill="#93AE68" opacity="0.6"/>
+  <path d="M0,400 L0,320 Q360,300 720,320 T1440,320 L1440,400 Z" fill="#6E8F4E" opacity="0.75"/>
+</svg>
+
+<div class="topbar">
+  <a href="../home.html" class="home-link">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M15 18l-6-6 6-6"/>
+    </svg>
+    Back to home
+  </a>
+</div>
+
+<div class="page-center">
+  <div class="wrap">
+    <div class="brand-row">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M12 2C12 2 6 6.5 6 12.5C6 16.09 8.69 19 12 19C15.31 19 18 16.09 18 12.5C18 6.5 12 2 12 2Z" fill="#4E7A38"/>
+        <path d="M12 19V22" stroke="#4E7A38" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+      <h1>FASAL</h1>
+    </div>
+
+    <div class="card">
+      <div class="step-title">Farmer Portal Login</div>
+      <div class="step-sub">Sign in using your registered mobile number and OTP.</div>
+
+      <!-- Quick demo accounts tip -->
+      <div style="background: #FAF8F2; border: 1px dashed var(--leaf); padding: 10px 14px; border-radius: 8px; margin-bottom: 18px; font-size: 0.8rem; color: var(--soil);">
+        <strong>🌾 Demo Registered Farmers:</strong><br>
+        • Ramesh Patel: <code>9826012345</code><br>
+        • Suresh Sharma: <code>9826023456</code><br>
+        • Sunita Devi: <code>9826034567</code>
+      </div>
+
+      <!-- Step 1: Mobile -->
+      <div id="loginStepMobile">
+        <div class="field" id="mobileField">
+          <label for="farmerMobile">Registered Mobile Number</label>
+          <input type="tel" id="farmerMobile" placeholder="10-digit mobile number" maxlength="10" inputmode="numeric" value="9826012345">
+          <div class="hint">A 6-digit OTP will be sent to this number.</div>
+          <div class="err" id="mobileErr">Please enter a valid 10-digit phone number.</div>
+        </div>
+
+        <button class="btn" id="sendOtpBtn" style="margin-top: 14px;">Send OTP</button>
+      </div>
+
+      <!-- Step 2: OTP Verification -->
+      <div id="loginStepOtp" style="display: none;">
+        <div class="step-sub" style="margin-bottom: 14px;">
+          OTP sent to <strong id="sentMobileDisplay"></strong>.
+          <br><small style="color: var(--leaf);">(Terminal SMS simulation: Check backend output, or enter OTP)</small>
+        </div>
+
+        <div class="field" id="otpField">
+          <label for="farmerOtp">Enter 6-Digit OTP</label>
+          <input type="text" id="farmerOtp" placeholder="e.g. 123456" maxlength="6" inputmode="numeric">
+          <div class="hint">Check terminal stdout or use sent OTP.</div>
+          <div class="err" id="otpErr">Invalid OTP. Please try again.</div>
+        </div>
+
+        <button class="btn" id="verifyOtpBtn" style="margin-top: 14px;">Verify & Sign In</button>
+        <button class="btn-sm btn-secondary" id="changeNumberBtn" style="width: 100%; margin-top: 10px; padding: 10px;">&larr; Change Mobile Number</button>
+      </div>
+
+      <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--line); text-align: center; font-size: 0.85rem;">
+        New farmer? <a href="../farmer/register.html" style="color: var(--leaf); font-weight: 600; text-decoration: none;">Register your account here</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/common.js"></script>
+<script src="/js/chatbot.js"></script>
+<script>
+  const mobileInput = document.getElementById('farmerMobile');
+  const otpInput = document.getElementById('farmerOtp');
+  const sendOtpBtn = document.getElementById('sendOtpBtn');
+  const verifyOtpBtn = document.getElementById('verifyOtpBtn');
+  const changeNumberBtn = document.getElementById('changeNumberBtn');
+  const stepMobile = document.getElementById('loginStepMobile');
+  const stepOtp = document.getElementById('loginStepOtp');
+  const sentMobileDisplay = document.getElementById('sentMobileDisplay');
+
+  // Enforce numeric only
+  mobileInput.addEventListener('input', (e) => {
+    e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10);
+  });
+  otpInput.addEventListener('input', (e) => {
+    e.target.value = e.target.value.replace(/\D/g, '').slice(0, 6);
+  });
+
+  sendOtpBtn.addEventListener('click', async () => {
+    const mobile = mobileInput.value.trim();
+    if (!/^[0-9]{10}$/.test(mobile)) {
+      document.getElementById('mobileField').classList.add('invalid');
+      return;
+    }
+    document.getElementById('mobileField').classList.remove('invalid');
+
+    sendOtpBtn.disabled = true;
+    sendOtpBtn.textContent = 'Sending OTP...';
+
+    try {
+      const res = await api.sendOtp(mobile, 'LOGIN');
+      showToast(res.message || 'OTP dispatched to registered mobile!', 'success');
+      
+      sentMobileDisplay.textContent = mobile.replace(/(\d{6})(\d{4})/, 'XXXXXX$2');
+      stepMobile.style.display = 'none';
+      stepOtp.style.display = 'block';
+      otpInput.focus();
+    } catch (err) {
+      showToast(err.message || 'Failed to send OTP. Please check mobile number.', 'error');
+    } finally {
+      sendOtpBtn.disabled = false;
+      sendOtpBtn.textContent = 'Send OTP';
+    }
+  });
+
+  verifyOtpBtn.addEventListener('click', async () => {
+    const mobile = mobileInput.value.trim();
+    const otp = otpInput.value.trim();
+    if (!/^[0-9]{6}$/.test(otp)) {
+      document.getElementById('otpField').classList.add('invalid');
+      return;
+    }
+    document.getElementById('otpField').classList.remove('invalid');
+
+    verifyOtpBtn.disabled = true;
+    verifyOtpBtn.textContent = 'Verifying...';
+
+    try {
+      const res = await api.verifyOtp(mobile, otp);
+      showToast('Login successful! Redirecting to dashboard...', 'success');
+      setTimeout(() => {
+        window.location.href = '/farmer/dashboard.html';
+      }, 700);
+    } catch (err) {
+      document.getElementById('otpErr').textContent = err.message || 'Invalid or expired OTP.';
+      document.getElementById('otpField').classList.add('invalid');
+      showToast(err.message || 'Verification failed', 'error');
+    } finally {
+      verifyOtpBtn.disabled = false;
+      verifyOtpBtn.textContent = 'Verify & Sign In';
+    }
+  });
+
+  changeNumberBtn.addEventListener('click', () => {
+    stepOtp.style.display = 'none';
+    stepMobile.style.display = 'block';
+    otpInput.value = '';
+  });
+</script>
+</body>
+</html>

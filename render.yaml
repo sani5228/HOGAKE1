@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: hogake-app
+    env: python
+    plan: free
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: gunicorn -b 0.0.0.0:$PORT 'backend.app:create_app()'
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: hogake-db
+          property: connectionString
+      - key: CORS_ORIGINS
+        scope: run_and_build
+        value: https://hogake.onrender.com
+
+  - type: pserv
+    name: hogake-db
+    env: postgres
+    plan: free
+    ipAllowList: []
+    databaseName: procurement_db
+    user: postgres

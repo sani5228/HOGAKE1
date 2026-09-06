@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FASAL — Center Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/style.css">
+<style>
+  .dashboard-layout{display:flex;min-height:100vh}
+  .sidebar{width:260px;background:#2C4A22;color:#fff;padding:24px 0;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100}
+  .sidebar .brand-row{display:flex;align-items:center;gap:10px;padding:0 20px 24px;border-bottom:1px solid rgba(255,255,255,0.15)}
+  .sidebar .brand-row svg{width:28px;height:28px}
+  .sidebar .brand-row h2{font-family:var(--font-display);font-size:1.4rem;letter-spacing:.03em}
+  .sidebar .user-info{padding:18px 20px;border-bottom:1px solid rgba(255,255,255,.15);font-size:.85rem}
+  .sidebar .user-info .uid{color:rgba(255,255,255,.6);font-size:.75rem;margin-top:4px}
+  .sidebar nav{flex:1;padding:12px 0}
+  .sidebar nav a{display:flex;align-items:center;gap:10px;padding:11px 20px;color:rgba(255,255,255,.8);text-decoration:none;font-size:.9rem;font-weight:500;transition:background .15s,color .15s;border-left:3px solid transparent}
+  .sidebar nav a:hover,.sidebar nav a.active{background:rgba(255,255,255,.1);color:#fff;border-left-color:#C97A2B}
+  .sidebar .logout-btn{margin:12px 20px 0;padding:10px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:6px;cursor:pointer;font-size:.85rem;font-weight:600}
+  .sidebar .logout-btn:hover{background:rgba(168,68,44,.6)}
+  .main-content{margin-left:260px;flex:1;padding:28px 32px;background:linear-gradient(180deg,#F7F2E7,#EDE8D6);min-height:100vh}
+  .main-content h1{font-family:var(--font-display);color:var(--soil);font-size:1.6rem;margin-bottom:6px}
+  .main-content .subtitle{color:var(--muted);font-size:.9rem;margin-bottom:24px}
+  .view-section{display:none}.view-section.active{display:block}
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:28px}
+  .kpi-card{background:#fff;border-radius:10px;padding:20px;border:1px solid #DCD4BF}
+  .kpi-card .kpi-label{font-size:.8rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+  .kpi-card .kpi-value{font-family:var(--font-display);font-size:1.8rem;color:var(--soil)}
+  .section-card{background:#fff;border-radius:10px;padding:22px;border:1px solid #DCD4BF;margin-bottom:20px}
+  .section-card h3{font-family:var(--font-display);font-size:1.15rem;color:var(--soil);margin-bottom:14px}
+  .form-row{margin-bottom:14px}
+  .form-row label{display:block;font-size:.85rem;font-weight:600;color:var(--soil);margin-bottom:5px}
+  .form-row input,.form-row select{width:100%;padding:10px 12px;border:1px solid #DCD4BF;border-radius:6px;font-size:.9rem;background:#fff}
+  .token-input{font-size:1.5rem!important;text-align:center;letter-spacing:4px;font-family:var(--font-display)!important;padding:16px!important}
+  .farmer-detail-card{background:#FAF8F2;border:1px solid #DCD4BF;border-radius:8px;padding:16px;margin:14px 0}
+  .farmer-detail-row{display:flex;justify-content:space-between;padding:6px 0;font-size:.88rem;border-bottom:1px solid #f0ece0}
+  .farmer-detail-row:last-child{border-bottom:none}
+  .farmer-detail-row .val{font-weight:600;color:var(--soil)}
+  .capacity-gauge{height:24px;border-radius:12px;background:#EDE8D6;overflow:hidden;margin:8px 0}
+  .capacity-gauge .fill{height:100%;border-radius:12px;transition:width .4s ease}
+  .profile-field{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #f0ece0;font-size:.9rem}
+  .profile-field .label{color:var(--muted);font-weight:600}.profile-field .value{color:var(--soil)}
+  @media(max-width:768px){.sidebar{width:100%;position:relative}.main-content{margin-left:0;padding:20px 16px}.dashboard-layout{flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="dashboard-layout">
+  <aside class="sidebar">
+    <div class="brand-row">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 2C12 2 6 6.5 6 12.5C6 16.09 8.69 19 12 19C15.31 19 18 16.09 18 12.5C18 6.5 12 2 12 2Z" fill="#C97A2B"/><path d="M12 19V22" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <h2>FASAL</h2>
+    </div>
+    <div class="user-info">
+      <div id="centerNameDisplay">Center</div>
+      <div class="uid" id="centerUidDisplay">—</div>
+    </div>
+    <nav>
+      <a href="#" class="nav-item active" data-view="dashboard">🏠 Dashboard</a>
+      <a href="#" class="nav-item" data-view="schedule">📅 Today's Schedule</a>
+      <a href="#" class="nav-item" data-view="verify">🔍 Token Verification</a>
+      <a href="#" class="nav-item" data-view="procurement">⚖️ Procurement</a>
+      <a href="#" class="nav-item" data-view="payments">💳 Payments</a>
+      <a href="#" class="nav-item" data-view="profile">🏢 Profile</a>
+    </nav>
+    <button class="logout-btn" id="logoutBtn">Sign Out</button>
+  </aside>
+
+  <main class="main-content">
+    <!-- DASHBOARD -->
+    <div class="view-section active" id="view-dashboard">
+      <h1 id="dashTitle">Center Dashboard</h1>
+      <p class="subtitle" id="dashSubtitle">Overview of today's operations.</p>
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-label">Today's Bookings</div><div class="kpi-value" id="kpiTodayBookings">0</div></div>
+        <div class="kpi-card"><div class="kpi-label">Capacity Used</div><div class="kpi-value" id="kpiCapacity">0 min</div></div>
+        <div class="kpi-card"><div class="kpi-label">Completed Today</div><div class="kpi-value" id="kpiCompletedToday">0</div></div>
+        <div class="kpi-card"><div class="kpi-label">Pending Arrivals</div><div class="kpi-value" id="kpiPending">0</div></div>
+      </div>
+      <div class="section-card">
+        <h3>Daily Capacity</h3>
+        <p style="font-size:.85rem;color:var(--muted);margin-bottom:8px">Planning: 420 min | Ceiling: 510 min</p>
+        <div class="capacity-gauge"><div class="fill" id="capacityFill" style="width:0%;background:#5C8A3A"></div></div>
+        <div style="display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted)"><span id="capUsed">0 min used</span><span>420 min plan</span></div>
+      </div>
+      <div class="section-card">
+        <h3>Today's Schedule</h3>
+        <div class="table-wrap">
+          <table class="data-table"><thead><tr><th>Token</th><th>Farmer</th><th>Crop</th><th>Qty</th><th>Time</th><th>Status</th></tr></thead>
+          <tbody id="dashScheduleBody"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCHEDULE -->
+    <div class="view-section" id="view-schedule">
+      <h1>Daily Schedule</h1>
+      <p class="subtitle">View scheduled bookings for any date.</p>
+      <div class="section-card">
+        <div class="form-row"><label for="scheduleDate">Select Date</label><input type="date" id="scheduleDate"></div>
+        <div class="table-wrap" style="margin-top:14px">
+          <table class="data-table"><thead><tr><th>Token</th><th>Farmer</th><th>Crop</th><th>Qty</th><th>Time Window</th><th>Shift</th><th>Status</th></tr></thead>
+          <tbody id="scheduleBody"><tr><td colspan="7" class="empty-state">Select a date to view schedule.</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOKEN VERIFICATION -->
+    <div class="view-section" id="view-verify">
+      <h1>Token Verification</h1>
+      <p class="subtitle">Verify a farmer's token upon arrival at the center.</p>
+      <div class="section-card">
+        <div class="form-row"><label for="tokenInput">Enter Token Number</label><input type="text" id="tokenInput" class="token-input" placeholder="TK-YYYYMMDD-####"></div>
+        <button class="btn-sm btn-primary" id="verifyTokenBtn" style="padding:12px 28px;font-size:.95rem;width:100%">Verify Token</button>
+      </div>
+      <div class="section-card" id="verifyResult" style="display:none">
+        <h3>✅ Token Verified</h3>
+        <div class="farmer-detail-card" id="verifyDetails"></div>
+        <button class="btn-sm btn-success" id="markArrivalBtn" style="padding:12px 28px;font-size:.95rem;width:100%;margin-top:10px">Mark Arrival</button>
+        <div id="arrivalSuccess" style="display:none;text-align:center;padding:14px;color:#4E7A38;font-weight:600;font-size:1rem;margin-top:10px">✅ Farmer arrival recorded successfully!</div>
+      </div>
+    </div>
+
+    <!-- PROCUREMENT -->
+    <div class="view-section" id="view-procurement">
+      <h1>Record Procurement</h1>
+      <p class="subtitle">Weigh and record produce for arrived farmers.</p>
+      <div class="section-card">
+        <div class="table-wrap">
+          <table class="data-table"><thead><tr><th>Token</th><th>Farmer</th><th>Crop</th><th>Expected Qty</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody id="procurementBody"><tr><td colspan="6" class="empty-state">Loading arrived farmers...</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAYMENTS -->
+    <div class="view-section" id="view-payments">
+      <h1>Payment Management</h1>
+      <p class="subtitle">Update payment status for completed procurements.</p>
+      <div class="section-card">
+        <div class="table-wrap">
+          <table class="data-table"><thead><tr><th>Token</th><th>Farmer</th><th>Crop</th><th>Actual Wt</th><th>Amount</th><th>Payment Status</th><th>Action</th></tr></thead>
+          <tbody id="paymentsBody"><tr><td colspan="7" class="empty-state">Loading...</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="view-section" id="view-profile">
+      <h1>Center Profile</h1>
+      <p class="subtitle">View and manage your center details.</p>
+      <div class="section-card"><h3>Center Information</h3><div id="profileFields"></div></div>
+    </div>
+  </main>
+</div>
+
+<!-- Procurement Modal -->
+<div class="modal-overlay" id="procurementModal">
+  <div class="modal-card">
+    <div class="modal-head"><h3>Record Procurement</h3><button class="modal-close" onclick="closeModal('procurementModal')">✕</button></div>
+    <div id="procModalBody">
+      <div class="farmer-detail-card" id="procDetails"></div>
+      <div class="form-row" style="margin-top:14px">
+        <label for="actualWeight">Actual Weight (Quintals)</label>
+        <input type="number" id="actualWeight" min="0.1" step="0.1" placeholder="Enter measured weight">
+      </div>
+      <div class="farmer-detail-card" id="calcBox" style="display:none">
+        <div class="farmer-detail-row"><span>Rate / Quintal</span><span class="val" id="calcRate">—</span></div>
+        <div class="farmer-detail-row"><span>Actual Weight</span><span class="val" id="calcWeight">—</span></div>
+        <div class="farmer-detail-row" style="font-size:1.1rem"><span><strong>Total Amount</strong></span><span class="val" style="color:#4E7A38" id="calcTotal">—</span></div>
+      </div>
+      <button class="btn-sm btn-success" id="submitProcBtn" style="padding:12px 28px;font-size:.95rem;width:100%;margin-top:14px">Submit Procurement</button>
+    </div>
+  </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal-overlay" id="paymentModal">
+  <div class="modal-card">
+    <div class="modal-head"><h3>Mark Payment</h3><button class="modal-close" onclick="closeModal('paymentModal')">✕</button></div>
+    <div id="payModalBody">
+      <div class="farmer-detail-card" id="payDetails"></div>
+      <div class="form-row" style="margin-top:14px"><label for="txnRef">Transaction Reference</label><input type="text" id="txnRef" placeholder="e.g. UTR/NEFT ref"></div>
+      <div class="form-row"><label for="payMode">Payment Mode</label>
+        <select id="payMode"><option value="DBT">DBT (Direct Benefit Transfer)</option><option value="NEFT">NEFT</option><option value="CASH">Cash</option></select>
+      </div>
+      <button class="btn-sm btn-success" id="submitPayBtn" style="padding:12px 28px;font-size:.95rem;width:100%;margin-top:14px">Confirm Payment</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/common.js"></script>
+<script src="/js/chatbot.js"></script>
+<script>
+if (!checkAuthGuard('center')) throw new Error('Redirecting...');
+
+let centerProfile = null;
+let currentProcBookingId = null;
+let currentProcRate = 0;
+let currentPaymentId = null;
+
+// Navigation
+document.querySelectorAll('.nav-item').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    a.classList.add('active');
+    const view = a.dataset.view;
+    document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + view).classList.add('active');
+    if (view === 'schedule') loadSchedule();
+    if (view === 'procurement') loadArrivedFarmers();
+    if (view === 'payments') loadPayments();
+    if (view === 'profile') renderProfile();
+    if (view === 'dashboard') loadCenterDashboard();
+  });
+});
+document.getElementById('logoutBtn').addEventListener('click', () => api.logout());
+
+const today = new Date().toISOString().split('T')[0];
+document.getElementById('scheduleDate').value = today;
+document.getElementById('scheduleDate').addEventListener('change', loadSchedule);
+
+async function init() {
+  try {
+    const res = await api.getCenterProfile();
+    centerProfile = res.data;
+    document.getElementById('centerNameDisplay').textContent = centerProfile.name || 'Center';
+    document.getElementById('centerUidDisplay').textContent = centerProfile.center_uid || '';
+    document.getElementById('dashTitle').textContent = centerProfile.name || 'Center Dashboard';
+    loadCenterDashboard();
+  } catch (err) {
+    showToast('Failed to load center profile.', 'error');
+    setTimeout(() => api.logout(), 1500);
+  }
+}
+
+async function loadCenterDashboard() {
+  try {
+    const schedRes = await api.getCenterSchedule(today);
+    const schedule = schedRes.data || {};
+    const bookings = schedule.bookings || [];
+    const totalBooked = bookings.length;
+    const committed = schedule.committed_minutes || 0;
+    const completed = bookings.filter(b => (b.status||'').toUpperCase() === 'COMPLETED').length;
+    const pending = bookings.filter(b => ['BOOKED','SCHEDULED'].includes((b.status||'').toUpperCase())).length;
+
+    document.getElementById('kpiTodayBookings').textContent = totalBooked;
+    document.getElementById('kpiCapacity').textContent = committed + ' min';
+    document.getElementById('kpiCompletedToday').textContent = completed;
+    document.getElementById('kpiPending').textContent = pending;
+
+    const pct = Math.min(100, Math.round((committed / 420) * 100));
+    const fill = document.getElementById('capacityFill');
+    fill.style.width = pct + '%';
+    fill.style.background = pct > 100 ? '#A8442C' : pct > 80 ? '#C97A2B' : '#5C8A3A';
+    document.getElementById('capUsed').textContent = committed + ' min used';
+
+    const tbody = document.getElementById('dashScheduleBody');
+    if (bookings.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No bookings scheduled for today.</td></tr>';
+    } else {
+      tbody.innerHTML = bookings.map(b => `<tr>
+        <td><strong>${b.token_number||'—'}</strong></td>
+        <td>${b.farmer_name||'—'}</td>
+        <td>${b.crop_name||'—'}</td>
+        <td>${b.expected_quantity_quintal||'—'} qtl</td>
+        <td>${formatTime(b.estimated_start_time)||'—'}</td>
+        <td>${formatStatusBadge(b.status)}</td>
+      </tr>`).join('');
+    }
+  } catch (err) {
+    console.error('Dashboard load error:', err);
+  }
+}
+
+async function loadSchedule() {
+  const date = document.getElementById('scheduleDate').value;
+  if (!date) return;
+  try {
+    const res = await api.getCenterSchedule(date);
+    const schedule = res.data || {};
+    const bookings = schedule.bookings || [];
+    const tbody = document.getElementById('scheduleBody');
+    if (bookings.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No bookings for this date.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = bookings.map(b => {
+      const start = formatTime(b.estimated_start_time);
+      const end = formatTime(b.estimated_end_time);
+      const shift = b.shift || (parseInt((b.estimated_start_time||'09').split(':')[0]) < 13 ? 'Morning' : 'Afternoon');
+      return `<tr>
+        <td><strong>${b.token_number||'—'}</strong></td>
+        <td>${b.farmer_name||'—'}</td>
+        <td>${b.crop_name||'—'}</td>
+        <td>${b.expected_quantity_quintal} qtl</td>
+        <td>${start} — ${end}</td>
+        <td>${shift}</td>
+        <td>${formatStatusBadge(b.status)}</td>
+      </tr>`;
+    }).join('');
+  } catch (err) {
+    showToast('Failed to load schedule.', 'error');
+  }
+}
+
+// Token Verification
+let verifiedBookingId = null;
+document.getElementById('verifyTokenBtn').addEventListener('click', async () => {
+  const token = document.getElementById('tokenInput').value.trim();
+  if (!token) { showToast('Enter a token number.', 'warning'); return; }
+  const btn = document.getElementById('verifyTokenBtn');
+  btn.disabled = true; btn.textContent = 'Verifying...';
+  try {
+    const res = await api.verifyToken(token);
+    const d = res.data;
+    verifiedBookingId = d.booking_id;
+    document.getElementById('verifyDetails').innerHTML = `
+      <div class="farmer-detail-row"><span>Farmer</span><span class="val">${d.farmer_name||'—'}</span></div>
+      <div class="farmer-detail-row"><span>Crop</span><span class="val">${d.crop_name||'—'}</span></div>
+      <div class="farmer-detail-row"><span>Quantity</span><span class="val">${d.expected_quantity_quintal||'—'} qtl</span></div>
+      <div class="farmer-detail-row"><span>Scheduled Time</span><span class="val">${formatTime(d.estimated_start_time)||'—'}</span></div>
+      <div class="farmer-detail-row"><span>Aadhaar (Masked)</span><span class="val">${d.masked_aadhaar||'XXXX-XXXX-****'}</span></div>
+      <div class="farmer-detail-row"><span>Status</span><span class="val">${formatStatusBadge(d.status)}</span></div>
+    `;
+    document.getElementById('verifyResult').style.display = 'block';
+    document.getElementById('arrivalSuccess').style.display = 'none';
+    const arrBtn = document.getElementById('markArrivalBtn');
+    if (['BOOKED','SCHEDULED'].includes((d.status||'').toUpperCase())) {
+      arrBtn.style.display = 'block';
+    } else {
+      arrBtn.style.display = 'none';
+    }
+    showToast('Token verified successfully!', 'success');
+  } catch (err) {
+    showToast(err.message || 'Token not found or invalid.', 'error');
+    document.getElementById('verifyResult').style.display = 'none';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Verify Token';
+  }
+});
+
+document.getElementById('markArrivalBtn').addEventListener('click', async () => {
+  if (!verifiedBookingId) return;
+  const btn = document.getElementById('markArrivalBtn');
+  btn.disabled = true; btn.textContent = 'Marking...';
+  try {
+    await api.markArrival(verifiedBookingId);
+    showToast('Farmer arrival recorded!', 'success');
+    btn.style.display = 'none';
+    document.getElementById('arrivalSuccess').style.display = 'block';
+  } catch (err) {
+    showToast(err.message || 'Failed to mark arrival.', 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Mark Arrival';
+  }
+});
+
+// Procurement
+async function loadArrivedFarmers() {
+  try {
+    const res = await api.getCenterBookings({ status: 'ARRIVED' });
+    const bookings = res.data || [];
+    const tbody = document.getElementById('procurementBody');
+    if (bookings.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No arrived farmers awaiting procurement.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = bookings.map(b => `<tr>
+      <td><strong>${b.token_number||'—'}</strong></td>
+      <td>${b.farmer_name||'—'}</td>
+      <td>${b.crop_name||'—'}</td>
+      <td>${b.expected_quantity_quintal} qtl</td>
+      <td>${formatStatusBadge(b.status)}</td>
+      <td><button class="btn-sm btn-primary" onclick="openProcModal(${b.booking_id},'${(b.farmer_name||'').replace(/'/g,"\\'")}','${(b.crop_name||'').replace(/'/g,"\\'")}',${b.expected_quantity_quintal},${b.rate_per_quintal||0})">Record Weighing</button></td>
+    </tr>`).join('');
+  } catch (err) { showToast('Failed to load arrived list.', 'error'); }
+}
+
+function openProcModal(bookingId, farmer, crop, expectedQty, rate) {
+  currentProcBookingId = bookingId;
+  currentProcRate = rate;
+  document.getElementById('procDetails').innerHTML = `
+    <div class="farmer-detail-row"><span>Farmer</span><span class="val">${farmer}</span></div>
+    <div class="farmer-detail-row"><span>Crop</span><span class="val">${crop}</span></div>
+    <div class="farmer-detail-row"><span>Expected Qty</span><span class="val">${expectedQty} qtl</span></div>
+  `;
+  document.getElementById('actualWeight').value = '';
+  document.getElementById('calcBox').style.display = 'none';
+  openModal('procurementModal');
+}
+
+document.getElementById('actualWeight').addEventListener('input', () => {
+  const w = parseFloat(document.getElementById('actualWeight').value);
+  if (w > 0 && currentProcRate > 0) {
+    document.getElementById('calcRate').textContent = formatCurrency(currentProcRate);
+    document.getElementById('calcWeight').textContent = w + ' qtl';
+    document.getElementById('calcTotal').textContent = formatCurrency(w * currentProcRate);
+    document.getElementById('calcBox').style.display = 'block';
+  } else {
+    document.getElementById('calcBox').style.display = 'none';
+  }
+});
+
+document.getElementById('submitProcBtn').addEventListener('click', async () => {
+  const w = parseFloat(document.getElementById('actualWeight').value);
+  if (!w || w <= 0) { showToast('Enter actual weight.', 'warning'); return; }
+  const btn = document.getElementById('submitProcBtn');
+  btn.disabled = true; btn.textContent = 'Submitting...';
+  try {
+    await api.recordProcurement(currentProcBookingId, w);
+    showToast('Procurement recorded successfully!', 'success');
+    closeModal('procurementModal');
+    loadArrivedFarmers();
+  } catch (err) { showToast(err.message || 'Failed to record procurement.', 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Submit Procurement'; }
+});
+
+// Payments
+async function loadPayments() {
+  try {
+    const res = await api.getCenterBookings({ status: 'COMPLETED' });
+    const bookings = res.data || [];
+    const tbody = document.getElementById('paymentsBody');
+    if (bookings.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No completed procurements.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = bookings.map(b => {
+      const payStatus = (b.payment_status || 'PENDING').toUpperCase();
+      let action = '';
+      if (payStatus !== 'PAID') {
+        action = `<button class="btn-sm btn-success" onclick="openPayModal(${b.payment_id || 0},'${(b.farmer_name||'').replace(/'/g,"\\'")}','${(b.crop_name||'').replace(/'/g,"\\'")}',${b.actual_weight_quintal||0},${b.payment_amount||0})">Mark Paid</button>`;
+      } else {
+        action = '<span style="color:#4E7A38;font-weight:600">✓ Paid</span>';
+      }
+      return `<tr>
+        <td><strong>${b.token_number||'—'}</strong></td>
+        <td>${b.farmer_name||'—'}</td>
+        <td>${b.crop_name||'—'}</td>
+        <td>${b.actual_weight_quintal||'—'} qtl</td>
+        <td>${formatCurrency(b.payment_amount)}</td>
+        <td>${formatStatusBadge(payStatus)}</td>
+        <td>${action}</td>
+      </tr>`;
+    }).join('');
+  } catch (err) { showToast('Failed to load payments.', 'error'); }
+}
+
+function openPayModal(paymentId, farmer, crop, weight, amount) {
+  currentPaymentId = paymentId;
+  document.getElementById('payDetails').innerHTML = `
+    <div class="farmer-detail-row"><span>Farmer</span><span class="val">${farmer}</span></div>
+    <div class="farmer-detail-row"><span>Crop</span><span class="val">${crop}</span></div>
+    <div class="farmer-detail-row"><span>Weight</span><span class="val">${weight} qtl</span></div>
+    <div class="farmer-detail-row"><span>Amount</span><span class="val">${formatCurrency(amount)}</span></div>
+  `;
+  document.getElementById('txnRef').value = '';
+  openModal('paymentModal');
+}
+
+document.getElementById('submitPayBtn').addEventListener('click', async () => {
+  const ref = document.getElementById('txnRef').value.trim();
+  const mode = document.getElementById('payMode').value;
+  if (!currentPaymentId) { showToast('No payment selected.', 'warning'); return; }
+  const btn = document.getElementById('submitPayBtn');
+  btn.disabled = true; btn.textContent = 'Processing...';
+  try {
+    await api.updatePaymentStatus(currentPaymentId, 'PAID', ref, mode);
+    showToast('Payment marked as paid!', 'success');
+    closeModal('paymentModal');
+    loadPayments();
+  } catch (err) { showToast(err.message || 'Payment update failed.', 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Confirm Payment'; }
+});
+
+// Profile
+function renderProfile() {
+  if (!centerProfile) return;
+  const fields = [
+    { label: 'Center ID', value: centerProfile.center_uid },
+    { label: 'Name', value: centerProfile.name },
+    { label: 'Address', value: centerProfile.address },
+    { label: 'District', value: centerProfile.district },
+    { label: 'State', value: centerProfile.state },
+    { label: 'Contact', value: centerProfile.contact_number },
+    { label: 'Status', value: centerProfile.verification_status || centerProfile.status },
+  ];
+  document.getElementById('profileFields').innerHTML = fields.map(f =>
+    `<div class="profile-field"><span class="label">${f.label}</span><span class="value">${f.value || '—'}</span></div>`
+  ).join('');
+}
+
+init();
+</script>
+</body>
+</html>

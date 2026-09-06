@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FASAL — Administrator Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/style.css">
+<style>
+  .dashboard-layout { display: flex; min-height: 100vh; }
+  .sidebar { width: 260px; background: #3B2C1F; color: #fff; padding: 24px 0; display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; }
+  .sidebar .brand-row { display: flex; align-items: center; gap: 10px; padding: 0 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.15); }
+  .sidebar .brand-row svg { width: 28px; height: 28px; }
+  .sidebar .brand-row h2 { font-family: var(--font-display); font-size: 1.4rem; letter-spacing: .03em; }
+  .sidebar .user-info { padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,.15); font-size: .85rem; }
+  .sidebar .user-info .uid { color: #E8B54D; font-size: .75rem; margin-top: 4px; font-weight: 600; }
+  .sidebar nav { flex: 1; padding: 12px 0; overflow-y: auto; }
+  .sidebar nav a { display: flex; align-items: center; gap: 10px; padding: 11px 20px; color: rgba(255,255,255,.8); text-decoration: none; font-size: .88rem; font-weight: 500; transition: background .15s, color .15s; border-left: 3px solid transparent; }
+  .sidebar nav a:hover, .sidebar nav a.active { background: rgba(255,255,255,.1); color: #fff; border-left-color: #C97A2B; }
+  .sidebar .logout-btn { margin: 12px 20px 0; padding: 10px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); color: #fff; border-radius: 6px; cursor: pointer; font-size: .85rem; font-weight: 600; }
+  .sidebar .logout-btn:hover { background: rgba(168,68,44,.6); }
+  .main-content { margin-left: 260px; flex: 1; padding: 28px 32px; background: linear-gradient(180deg,#F7F2E7,#EDE8D6); min-height: 100vh; }
+  .main-content h1 { font-family: var(--font-display); color: var(--soil); font-size: 1.6rem; margin-bottom: 6px; }
+  .main-content .subtitle { color: var(--muted); font-size: .9rem; margin-bottom: 24px; }
+  .view-section { display: none; }
+  .view-section.active { display: block; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(210px,1fr)); gap: 16px; margin-bottom: 28px; }
+  .kpi-card { background: #fff; border-radius: 10px; padding: 20px; border: 1px solid #DCD4BF; }
+  .kpi-card .kpi-label { font-size: .78rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; }
+  .kpi-card .kpi-value { font-family: var(--font-display); font-size: 1.8rem; color: var(--soil); }
+  .section-card { background: #fff; border-radius: 10px; padding: 22px; border: 1px solid #DCD4BF; margin-bottom: 20px; }
+  .section-card h3 { font-family: var(--font-display); font-size: 1.15rem; color: var(--soil); margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
+  .form-row { margin-bottom: 14px; }
+  .form-row label { display: block; font-size: .85rem; font-weight: 600; color: var(--soil); margin-bottom: 5px; }
+  .form-row input, .form-row select { width: 100%; padding: 10px 12px; border: 1px solid #DCD4BF; border-radius: 6px; font-size: .9rem; background: #fff; }
+  .action-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .filter-bar { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+  .filter-bar input, .filter-bar select { padding: 8px 12px; border: 1px solid #DCD4BF; border-radius: 6px; font-size: .85rem; background: #fff; }
+  .badge-pending { background: #FDE8D3; color: #A5601C; padding: 3px 8px; border-radius: 12px; font-size: .75rem; font-weight: 600; }
+  .badge-active { background: #EAF4DE; color: #2C4A22; padding: 3px 8px; border-radius: 12px; font-size: .75rem; font-weight: 600; }
+  .badge-suspended { background: #FDE2DD; color: #A8442C; padding: 3px 8px; border-radius: 12px; font-size: .75rem; font-weight: 600; }
+  .btn-sm { padding: 6px 12px; border-radius: 5px; font-size: .8rem; font-weight: 600; cursor: pointer; border: none; }
+  .btn-approve { background: #4E7A38; color: #fff; }
+  .btn-reject { background: #A8442C; color: #fff; }
+  .btn-suspend { background: #C97A2B; color: #fff; }
+  .btn-neutral { background: #EDE8D6; color: var(--soil); }
+  @media(max-width:768px){ .sidebar { width: 100%; position: relative; } .main-content { margin-left: 0; padding: 20px 16px; } .dashboard-layout { flex-direction: column; } }
+</style>
+</head>
+<body>
+<div class="dashboard-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand-row">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 2C12 2 6 6.5 6 12.5C6 16.09 8.69 19 12 19C15.31 19 18 16.09 18 12.5C18 6.5 12 2 12 2Z" fill="#C97A2B"/><path d="M12 19V22" stroke="#E8B54D" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <h2>FASAL</h2>
+    </div>
+    <div class="user-info">
+      <div id="adminNameDisplay">System Administrator</div>
+      <div class="uid">ROLE: SUPERADMIN</div>
+    </div>
+    <nav>
+      <a href="#" class="nav-item active" data-view="dashboard">📊 System Overview</a>
+      <a href="#" class="nav-item" data-view="centers">🏢 Procurement Centers</a>
+      <a href="#" class="nav-item" data-view="farmers">🌾 Farmers Directory</a>
+      <a href="#" class="nav-item" data-view="crops">🌽 Crop Catalog & MSP</a>
+      <a href="#" class="nav-item" data-view="bookings">📑 All Bookings</a>
+      <a href="#" class="nav-item" data-view="procurements">⚖️ Procurements & Payouts</a>
+      <a href="#" class="nav-item" data-view="reports">📈 Capacity Reports</a>
+      <a href="#" class="nav-item" data-view="audit">📜 Audit Log</a>
+    </nav>
+    <button class="logout-btn" id="logoutBtn">Sign Out</button>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+
+    <!-- 1. DASHBOARD OVERVIEW -->
+    <div class="view-section active" id="view-dashboard">
+      <h1>System Overview</h1>
+      <p class="subtitle">Platform-wide statistics and operations monitor.</p>
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-label">Registered Farmers</div><div class="kpi-value" id="kpiFarmers">0</div></div>
+        <div class="kpi-card"><div class="kpi-label">Active Centers</div><div class="kpi-value" id="kpiCenters">0</div></div>
+        <div class="kpi-card"><div class="kpi-label">Pending Verifications</div><div class="kpi-value" id="kpiPendingCenters" style="color:#C97A2B">0</div></div>
+        <div class="kpi-card"><div class="kpi-label">Total Bookings</div><div class="kpi-value" id="kpiBookings">0</div></div>
+        <div class="kpi-card"><div class="kpi-label">Completed Procurements</div><div class="kpi-value" id="kpiCompleted">0</div></div>
+        <div class="kpi-card"><div class="kpi-label">Total Procured (Qtl)</div><div class="kpi-value" id="kpiWeight">0.0</div></div>
+        <div class="kpi-card"><div class="kpi-label">Total Payout Disbursed</div><div class="kpi-value" id="kpiPayout" style="color:#4E7A38">₹0</div></div>
+        <div class="kpi-card"><div class="kpi-label">In-Season Crops</div><div class="kpi-value" id="kpiCrops">0</div></div>
+      </div>
+
+      <div class="section-card" id="pendingAlertCard" style="display:none; border-left: 4px solid #C97A2B; background: #FFFDF9;">
+        <h3>🔔 Pending Center Approvals</h3>
+        <p style="font-size:0.88rem; color:var(--soil); margin-bottom: 12px;">New procurement centers are awaiting administrative verification before they can accept bookings.</p>
+        <button class="btn-sm btn-approve" onclick="document.querySelector('[data-view=centers]').click()">Review Pending Centers</button>
+      </div>
+
+      <div class="section-card">
+        <h3>Recent Bookings Activity</h3>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>Token</th><th>Farmer</th><th>Crop</th><th>Center</th><th>Date</th><th>Shift</th><th>Status</th></tr>
+            </thead>
+            <tbody id="recentBookingsBody"><tr><td colspan="7" class="empty-state">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. PROCUREMENT CENTERS -->
+    <div class="view-section" id="view-centers">
+      <h1>Procurement Centers Management</h1>
+      <p class="subtitle">Review center verification requests, operational capacities, and crop coverage.</p>
+      <div class="section-card">
+        <div class="filter-bar">
+          <input type="text" id="centerSearch" placeholder="Search by name, district, or ID...">
+          <select id="centerStatusFilter">
+            <option value="">All Statuses</option>
+            <option value="PENDING_VERIFICATION">Pending Verification</option>
+            <option value="ACTIVE">Active</option>
+            <option value="SUSPENDED">Suspended</option>
+          </select>
+          <button class="btn-sm btn-neutral" onclick="loadCenters()">Filter</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>Center ID</th><th>Name</th><th>Location</th><th>Contact</th><th>Capacity (Min)</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="centersTableBody"><tr><td colspan="7" class="empty-state">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. FARMERS DIRECTORY -->
+    <div class="view-section" id="view-farmers">
+      <h1>Farmers Directory</h1>
+      <p class="subtitle">Unified registry of all onboarded farmers and their crop registrations.</p>
+      <div class="section-card">
+        <div class="filter-bar">
+          <input type="text" id="farmerSearch" placeholder="Search by name, mobile, or Farmer ID...">
+          <select id="farmerStatusFilter">
+            <option value="">All Statuses</option>
+            <option value="ACTIVE">Active</option>
+            <option value="SUSPENDED">Suspended</option>
+          </select>
+          <button class="btn-sm btn-neutral" onclick="loadFarmers()">Search</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>Farmer ID</th><th>Name</th><th>Mobile</th><th>Location</th><th>Aadhaar (Masked)</th><th>Registered Crops</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="farmersTableBody"><tr><td colspan="8" class="empty-state">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. CROP CATALOG & MSP -->
+    <div class="view-section" id="view-crops">
+      <h1>Crop Catalog & MSP Configuration</h1>
+      <p class="subtitle">Manage procurement pricing (₹/Quintal), unloading duration norms, and seasonal availability.</p>
+      <div class="section-card">
+        <h3>
+          <span>Registered Crops Catalog</span>
+          <button class="btn-sm btn-approve" onclick="openAddCropModal()">+ Add New Crop</button>
+        </h3>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>ID</th><th>Crop Name</th><th>Category</th><th>MSP Rate (₹/Qtl)</th><th>Unload Norm (Min/Qtl)</th><th>Season</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="cropsTableBody"><tr><td colspan="8" class="empty-state">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. ALL BOOKINGS -->
+    <div class="view-section" id="view-bookings">
+      <h1>System-Wide Slot Bookings</h1>
+      <p class="subtitle">Monitor assigned slots, queuing tokens, and allocation across all procurement centers.</p>
+      <div class="section-card">
+        <div class="filter-bar">
+          <select id="bookingStatusFilter">
+            <option value="">All Statuses</option>
+            <option value="BOOKED">Booked</option>
+            <option value="SCHEDULED">Scheduled</option>
+            <option value="ARRIVED">Arrived</option>
+            <option value="PROCUREMENT">Procurement</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
+          <input type="date" id="bookingDateFilter">
+          <button class="btn-sm btn-neutral" onclick="loadAllBookings()">Filter</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>Token</th><th>Farmer</th><th>Crop</th><th>Quantity</th><th>Center</th><th>Assigned Date</th><th>Time Window</th><th>Status</th></tr>
+            </thead>
+            <tbody id="bookingsTableBody"><tr><td colspan="8" class="empty-state">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. PROCUREMENTS & PAYOUTS -->
+    <div class="view-section" id="view-procurements">
+      <h1>Procurements & Payout Audit</h1>
+      <p class="subtitle">Full transaction record of weighed produce, MSP calculations, and settlement status.</p>
+      <div class="section-card">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>Record ID</th><th>Token</th><th>Farmer</th><th>Center</th><th>Crop</th><th>Actual Weight</th><th>Rate (₹)</th><th>Total Payout</th><th>Payment Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="procurementsTableBody"><tr><td colspan="10" class="empty-state">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. CAPACITY REPORTS -->
+    <div class="view-section" id="view-reports">
+      <h1>Capacity Utilization Reports</h1>
+      <p class="subtitle">Authoritative 7-hour slot planning vs. 8-hour operational bandwidth analysis (rules.md §8).</p>
+      <div class="section-card">
+        <div class="filter-bar">
+          <label style="font-size:0.85rem; font-weight:600; color:var(--soil)">Target Date:</label>
+          <input type="date" id="reportDateFilter">
+          <button class="btn-sm btn-neutral" onclick="loadCapacityReport()">Generate Report</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>Center Name</th><th>Date</th><th>Shift 1 Used / Plan</th><th>Shift 2 Used / Plan</th><th>Total Committed</th><th>Planning Cap (7h)</th><th>Bandwidth Left</th><th>Utilization %</th></tr>
+            </thead>
+            <tbody id="reportsTableBody"><tr><td colspan="8" class="empty-state">Select a date and click Generate Report.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 8. AUDIT LOG -->
+    <div class="view-section" id="view-audit">
+      <h1>Security & Audit Trail</h1>
+      <p class="subtitle">Immutable log of system events, role actions, and state transitions.</p>
+      <div class="section-card">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr><th>Timestamp</th><th>Actor Role</th><th>Actor ID</th><th>Action</th><th>Entity</th><th>Entity ID</th><th>IP Address</th></tr>
+            </thead>
+            <tbody id="auditTableBody"><tr><td colspan="7" class="empty-state">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Add/Edit Crop Modal -->
+<div class="modal-overlay" id="cropModal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3 id="cropModalTitle">Add Agricultural Crop</h3>
+      <button class="modal-close" onclick="closeModal('cropModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editCropId">
+      <div class="form-row">
+        <label for="cropNameInput">Crop Name</label>
+        <input type="text" id="cropNameInput" placeholder="e.g. Mustard">
+      </div>
+      <div class="form-row">
+        <label for="cropCatInput">Category</label>
+        <input type="text" id="cropCatInput" placeholder="e.g. Oilseeds, Pulses, Cereals">
+      </div>
+      <div class="form-row">
+        <label for="cropRateInput">MSP Rate per Quintal (₹)</label>
+        <input type="number" id="cropRateInput" step="0.5" placeholder="e.g. 5650.00">
+      </div>
+      <div class="form-row">
+        <label for="cropTimeInput">Unloading Duration Norm (Minutes per Quintal)</label>
+        <input type="number" id="cropTimeInput" step="1" min="1" placeholder="e.g. 4">
+      </div>
+      <div class="form-row">
+        <label for="cropSeasonSelect">Agricultural Season</label>
+        <select id="cropSeasonSelect">
+          <option value="Kharif">Kharif (Monsoon)</option>
+          <option value="Rabi">Rabi (Winter)</option>
+          <option value="Zaid">Zaid (Summer)</option>
+        </select>
+      </div>
+      <button class="btn" id="saveCropBtn" style="margin-top:10px;">Save Crop</button>
+    </div>
+  </div>
+</div>
+
+<!-- Update Payment Modal -->
+<div class="modal-overlay" id="paymentModal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3>Update Farmer Payment Status</h3>
+      <button class="modal-close" onclick="closeModal('paymentModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="payModalId">
+      <div class="form-row">
+        <label>Payment ID</label>
+        <input type="text" id="payModalDisplayId" disabled>
+      </div>
+      <div class="form-row">
+        <label for="payStatusSelect">Payment Status</label>
+        <select id="payStatusSelect">
+          <option value="PENDING">PENDING</option>
+          <option value="PROCESSED">PROCESSED</option>
+          <option value="PAID">PAID</option>
+          <option value="FAILED">FAILED</option>
+        </select>
+      </div>
+      <button class="btn" id="savePaymentBtn" style="margin-top:10px;">Confirm Status Update</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/common.js"></script>
+<script src="/js/chatbot.js"></script>
+<script>
+// Auth guard
+if (!checkAuthGuard('admin')) throw new Error('Redirecting...');
+
+// Navigation
+document.querySelectorAll('.nav-item').forEach(a => {
+  a.addEventListener('click', (e) => {
+    e.preventDefault();
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    a.classList.add('active');
+    const view = a.dataset.view;
+    document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + view).classList.add('active');
+
+    if (view === 'dashboard') loadStats();
+    if (view === 'centers') loadCenters();
+    if (view === 'farmers') loadFarmers();
+    if (view === 'crops') loadCrops();
+    if (view === 'bookings') loadAllBookings();
+    if (view === 'procurements') loadProcurements();
+    if (view === 'reports') loadCapacityReport();
+    if (view === 'audit') loadAuditLogs();
+  });
+});
+
+document.getElementById('logoutBtn').addEventListener('click', () => { api.logout(); });
+
+// 1. STATS & OVERVIEW
+async function loadStats() {
+  try {
+    const res = await api.getAdminStats();
+    const d = res.data;
+    document.getElementById('kpiFarmers').textContent = d.farmers.total;
+    document.getElementById('kpiCenters').textContent = d.centers.active;
+    document.getElementById('kpiPendingCenters').textContent = d.centers.pending_verification;
+    document.getElementById('kpiBookings').textContent = d.bookings.total;
+    document.getElementById('kpiCompleted').textContent = d.procurements.completed;
+    document.getElementById('kpiWeight').textContent = d.procurements.total_weight_quintals + ' qtl';
+    document.getElementById('kpiPayout').textContent = formatCurrency(d.procurements.total_payout_amount);
+    document.getElementById('kpiCrops').textContent = d.crops.active;
+
+    if (d.centers.pending_verification > 0) {
+      document.getElementById('pendingAlertCard').style.display = 'block';
+    } else {
+      document.getElementById('pendingAlertCard').style.display = 'none';
+    }
+
+    // Load recent bookings
+    const bRes = await api.listAllBookings({});
+    const bookings = (bRes.data || []).slice(0, 8);
+    const tbody = document.getElementById('recentBookingsBody');
+    if (bookings.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No bookings recorded yet.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = bookings.map(b => `<tr>
+      <td><strong>${b.token_number}</strong></td>
+      <td>${b.farmer_name || b.farmer_id}</td>
+      <td>${b.crop_name || '—'}</td>
+      <td>${b.center_name || '—'}</td>
+      <td>${formatDate(b.assigned_date)}</td>
+      <td>${b.shift || '—'}</td>
+      <td>${formatStatusBadge(b.status)}</td>
+    </tr>`).join('');
+  } catch (err) {
+    showToast('Failed to load system statistics.', 'error');
+  }
+}
+
+// 2. CENTERS MANAGEMENT
+async function loadCenters() {
+  const search = document.getElementById('centerSearch').value.trim();
+  const status = document.getElementById('centerStatusFilter').value;
+  try {
+    const res = await api.listCenters(search, status);
+    const centers = res.data || [];
+    const tbody = document.getElementById('centersTableBody');
+    if (centers.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No centers match the criteria.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = centers.map(c => `<tr>
+      <td><code>${c.center_id}</code></td>
+      <td><strong>${c.name}</strong></td>
+      <td>${c.district}, ${c.state}</td>
+      <td>${c.contact_number || '—'}</td>
+      <td>${c.daily_capacity_minutes || 420} min</td>
+      <td>${formatStatusBadge(c.status)}</td>
+      <td>
+        <div class="action-row">
+          ${c.status === 'PENDING_VERIFICATION' ? `
+            <button class="btn-sm btn-approve" onclick="verifyCenter('${c.center_id}', 'APPROVE')">Approve</button>
+            <button class="btn-sm btn-reject" onclick="verifyCenter('${c.center_id}', 'REJECT')">Reject</button>
+          ` : ''}
+          ${c.status === 'ACTIVE' ? `
+            <button class="btn-sm btn-suspend" onclick="verifyCenter('${c.center_id}', 'SUSPEND')">Suspend</button>
+          ` : ''}
+          ${c.status === 'SUSPENDED' ? `
+            <button class="btn-sm btn-approve" onclick="verifyCenter('${c.center_id}', 'APPROVE')">Activate</button>
+          ` : ''}
+        </div>
+      </td>
+    </tr>`).join('');
+  } catch (err) {
+    showToast('Failed to load centers.', 'error');
+  }
+}
+
+async function verifyCenter(centerId, action) {
+  if (!confirm(`Are you sure you want to ${action} center ${centerId}?`)) return;
+  try {
+    await api.verifyCenter(centerId, action);
+    showToast(`Center ${centerId} status updated: ${action}`, 'success');
+    loadCenters();
+    loadStats();
+  } catch (err) {
+    showToast(err.message || 'Action failed.', 'error');
+  }
+}
+
+// 3. FARMERS MANAGEMENT
+async function loadFarmers() {
+  const search = document.getElementById('farmerSearch').value.trim();
+  const status = document.getElementById('farmerStatusFilter').value;
+  try {
+    const res = await api.listFarmers(search, status);
+    const farmers = res.data || [];
+    const tbody = document.getElementById('farmersTableBody');
+    if (farmers.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No farmers found.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = farmers.map(f => `<tr>
+      <td><code>${f.farmer_id}</code></td>
+      <td><strong>${f.name}</strong></td>
+      <td>${f.mobile_number}</td>
+      <td>${f.district}, ${f.state}</td>
+      <td><code>${f.aadhaar_masked || 'XXXX-XXXX-' + (f.aadhaar_last4 || '****')}</code></td>
+      <td>${(f.crops || []).map(c => `<span class="badge-active" style="display:inline-block;margin:2px;">${c.name}</span>`).join('') || '—'}</td>
+      <td>${formatStatusBadge(f.status)}</td>
+      <td>
+        <button class="btn-sm ${f.status === 'ACTIVE' ? 'btn-suspend' : 'btn-approve'}"
+          onclick="toggleFarmerStatus('${f.farmer_id}', '${f.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE'}')">
+          ${f.status === 'ACTIVE' ? 'Suspend' : 'Activate'}
+        </button>
+      </td>
+    </tr>`).join('');
+  } catch (err) {
+    showToast('Failed to load farmers.', 'error');
+  }
+}
+
+async function toggleFarmerStatus(farmerId, newStatus) {
+  try {
+    await api.setFarmerStatus(farmerId, newStatus);
+    showToast(`Farmer ${farmerId} status set to ${newStatus}`, 'success');
+    loadFarmers();
+  } catch (err) {
+    showToast(err.message || 'Status update failed.', 'error');
+  }
+}
+
+// 4. CROPS CATALOG
+async function loadCrops() {
+  try {
+    const res = await api.listCrops(null, false);
+    const crops = res.data || [];
+    const tbody = document.getElementById('cropsTableBody');
+    if (crops.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No crops found in catalog.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = crops.map(c => `<tr>
+      <td>${c.crop_id}</td>
+      <td><strong>${c.name}</strong></td>
+      <td>${c.category || 'Agricultural'}</td>
+      <td><strong>${formatCurrency(c.rate_per_quintal)}</strong></td>
+      <td>${c.time_to_unload_per_quintal_minutes || 5} min</td>
+      <td><span class="badge-active">${c.season}</span></td>
+      <td>${formatStatusBadge(c.status)}</td>
+      <td>
+        <div class="action-row">
+          <button class="btn-sm btn-neutral" onclick='openEditCropModal(${JSON.stringify(c)})'>Edit</button>
+          <button class="btn-sm ${c.status === 'ACTIVE' ? 'btn-reject' : 'btn-approve'}" onclick="toggleCropStatus(${c.crop_id}, '${c.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE'}')">
+            ${c.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+          </button>
+        </div>
+      </td>
+    </tr>`).join('');
+  } catch (err) {
+    showToast('Failed to load crops.', 'error');
+  }
+}
+
+function openAddCropModal() {
+  document.getElementById('editCropId').value = '';
+  document.getElementById('cropModalTitle').textContent = 'Add Agricultural Crop';
+  document.getElementById('cropNameInput').value = '';
+  document.getElementById('cropCatInput').value = '';
+  document.getElementById('cropRateInput').value = '';
+  document.getElementById('cropTimeInput').value = '4';
+  document.getElementById('cropSeasonSelect').value = 'Kharif';
+  openModal('cropModal');
+}
+
+function openEditCropModal(crop) {
+  document.getElementById('editCropId').value = crop.crop_id;
+  document.getElementById('cropModalTitle').textContent = `Edit Crop: ${crop.name}`;
+  document.getElementById('cropNameInput').value = crop.name;
+  document.getElementById('cropCatInput').value = crop.category || '';
+  document.getElementById('cropRateInput').value = crop.rate_per_quintal;
+  document.getElementById('cropTimeInput').value = crop.time_to_unload_per_quintal_minutes || 5;
+  document.getElementById('cropSeasonSelect').value = crop.season;
+  openModal('cropModal');
+}
+
+document.getElementById('saveCropBtn').addEventListener('click', async () => {
+  const cropId = document.getElementById('editCropId').value;
+  const data = {
+    name: document.getElementById('cropNameInput').value.trim(),
+    category: document.getElementById('cropCatInput').value.trim(),
+    rate_per_quintal: parseFloat(document.getElementById('cropRateInput').value),
+    time_to_unload_per_quintal_minutes: parseInt(document.getElementById('cropTimeInput').value),
+    season: document.getElementById('cropSeasonSelect').value
+  };
+
+  if (!data.name || isNaN(data.rate_per_quintal)) {
+    showToast('Please fill all required fields.', 'error');
+    return;
+  }
+
+  try {
+    if (cropId) {
+      await api.updateCrop(cropId, data);
+      showToast('Crop updated successfully.', 'success');
+    } else {
+      await api.createCrop(data);
+      showToast('New crop created successfully.', 'success');
+    }
+    closeModal('cropModal');
+    loadCrops();
+  } catch (err) {
+    showToast(err.message || 'Crop operation failed.', 'error');
+  }
+});
+
+async function toggleCropStatus(cropId, newStatus) {
+  try {
+    await api.updateCrop(cropId, { status: newStatus });
+    showToast(`Crop status updated to ${newStatus}`, 'success');
+    loadCrops();
+  } catch (err) {
+    showToast(err.message || 'Update failed.', 'error');
+  }
+}
+
+// 5. ALL BOOKINGS
+async function loadAllBookings() {
+  const status = document.getElementById('bookingStatusFilter').value;
+  const bDate = document.getElementById('bookingDateFilter').value;
+  const params = {};
+  if (status) params.status = status;
+  if (bDate) params.date = bDate;
+
+  try {
+    const res = await api.listAllBookings(params);
+    const bookings = res.data || [];
+    const tbody = document.getElementById('bookingsTableBody');
+    if (bookings.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No bookings found matching filters.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = bookings.map(b => `<tr>
+      <td><strong>${b.token_number}</strong></td>
+      <td>${b.farmer_name || b.farmer_id}</td>
+      <td>${b.crop_name || '—'}</td>
+      <td>${b.expected_quantity_quintal} qtl</td>
+      <td>${b.center_name || b.center_id}</td>
+      <td>${formatDate(b.assigned_date)}</td>
+      <td>${b.shift || '—'} (${b.start_time} - ${b.end_time})</td>
+      <td>${formatStatusBadge(b.status)}</td>
+    </tr>`).join('');
+  } catch (err) {
+    showToast('Failed to load bookings.', 'error');
+  }
+}
+
+// 6. PROCUREMENTS & PAYOUTS
+async function loadProcurements() {
+  try {
+    const res = await api.listAllProcurements();
+    const records = res.data || [];
+    const tbody = document.getElementById('procurementsTableBody');
+    if (records.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="10" class="empty-state">No procurements completed yet.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = records.map(r => `<tr>
+      <td>#${r.record_id}</td>
+      <td><strong>${r.token_number}</strong></td>
+      <td>${r.farmer_name || r.farmer_id}</td>
+      <td>${r.center_name || r.center_id}</td>
+      <td>${r.crop_name}</td>
+      <td><strong>${r.actual_weight_quintal}</strong> qtl</td>
+      <td>${formatCurrency(r.rate_per_quintal)}</td>
+      <td><strong style="color:#4E7A38">${formatCurrency(r.total_amount)}</strong></td>
+      <td>${formatStatusBadge(r.payment_status || 'PENDING')}</td>
+      <td>
+        <button class="btn-sm btn-neutral" onclick="openPaymentModal(${r.record_id}, '${r.payment_status || 'PENDING'}')">Update Status</button>
+      </td>
+    </tr>`).join('');
+  } catch (err) {
+    showToast('Failed to load procurement records.', 'error');
+  }
+}
+
+function openPaymentModal(recordId, currentStatus) {
+  document.getElementById('payModalId').value = recordId;
+  document.getElementById('payModalDisplayId').value = '#' + recordId;
+  document.getElementById('payStatusSelect').value = currentStatus;
+  openModal('paymentModal');
+}
+
+document.getElementById('savePaymentBtn').addEventListener('click', async () => {
+  const payId = document.getElementById('payModalId').value;
+  const status = document.getElementById('payStatusSelect').value;
+  try {
+    await api.updatePaymentStatus(payId, status);
+    showToast('Payment status updated successfully.', 'success');
+    closeModal('paymentModal');
+    loadProcurements();
+    loadStats();
+  } catch (err) {
+    showToast(err.message || 'Payment update failed.', 'error');
+  }
+});
+
+// 7. CAPACITY REPORTS
+async function loadCapacityReport() {
+  const dVal = document.getElementById('reportDateFilter').value;
+  try {
+    const res = await api.getCapacityReport(dVal);
+    const report = res.data || [];
+    const tbody = document.getElementById('reportsTableBody');
+    if (report.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No scheduled operational data for this date.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = report.map(r => {
+      const utilPct = Math.round(((r.total_committed_minutes || 0) / 420) * 100);
+      const color = utilPct >= 90 ? '#A8442C' : (utilPct >= 70 ? '#C97A2B' : '#4E7A38');
+      return `<tr>
+        <td><strong>${r.center_name}</strong></td>
+        <td>${formatDate(r.date)}</td>
+        <td>${r.shift1_committed_minutes || 0} / 210m</td>
+        <td>${r.shift2_committed_minutes || 0} / 210m</td>
+        <td><strong>${r.total_committed_minutes || 0} min</strong></td>
+        <td>420 min (7h)</td>
+        <td>${r.operational_bandwidth_remaining_minutes || 60} min buffer</td>
+        <td><span style="color:${color}; font-weight:700;">${utilPct}%</span></td>
+      </tr>`;
+    }).join('');
+  } catch (err) {
+    showToast('Could not load capacity report.', 'error');
+  }
+}
+
+// 8. AUDIT LOGS
+async function loadAuditLogs() {
+  try {
+    const res = await api.getAuditLogs(50);
+    const logs = res.data || [];
+    const tbody = document.getElementById('auditTableBody');
+    if (logs.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No audit events recorded.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = logs.map(l => `<tr>
+      <td><small>${formatDate(l.created_at)} ${new Date(l.created_at).toLocaleTimeString()}</small></td>
+      <td><strong>${l.actor_role}</strong></td>
+      <td><code>${l.actor_id || 'System'}</code></td>
+      <td>${l.action}</td>
+      <td>${l.target_entity}</td>
+      <td><code>${l.target_id || '—'}</code></td>
+      <td><small>${l.ip_address || '127.0.0.1'}</small></td>
+    </tr>`).join('');
+  } catch (err) {
+    showToast('Failed to load audit logs.', 'error');
+  }
+}
+
+// Initial Load
+document.getElementById('reportDateFilter').value = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+loadStats();
+</script>
+</body>
+</html>

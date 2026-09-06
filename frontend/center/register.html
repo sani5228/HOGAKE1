@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FASAL — Register Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="sun"></div>
+<svg class="field-rows" viewBox="0 0 1440 400" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M0,400 L0,220 Q360,160 720,220 T1440,220 L1440,400 Z" fill="#B7C68A" opacity="0.55"/>
+  <path d="M0,400 L0,270 Q360,230 720,270 T1440,270 L1440,400 Z" fill="#93AE68" opacity="0.6"/>
+  <path d="M0,400 L0,320 Q360,300 720,320 T1440,320 L1440,400 Z" fill="#6E8F4E" opacity="0.75"/>
+</svg>
+<div class="topbar">
+  <a href="../home.html" class="home-link">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    Back to home
+  </a>
+</div>
+<div class="page-center">
+<div class="wrap" style="max-width: 480px;">
+  <div class="brand-row">
+    <svg viewBox="0 0 24 24" fill="none"><path d="M12 2C12 2 6 6.5 6 12.5C6 16.09 8.69 19 12 19C15.31 19 18 16.09 18 12.5C18 6.5 12 2 12 2Z" fill="#4E7A38"/><path d="M12 19V22" stroke="#4E7A38" stroke-width="1.6" stroke-linecap="round"/></svg>
+    <h1>FASAL</h1>
+  </div>
+  <div class="card">
+    <div id="regForm">
+      <div class="step-title">Register Procurement Center</div>
+      <div class="step-sub">Register your center to receive farmer bookings and manage procurement.</div>
+      <div class="field"><label for="cName">Center Name</label><input type="text" id="cName" placeholder="e.g. Krishi Mandi East"><div class="err">Center name required.</div></div>
+      <div class="field"><label for="cUsername">Username</label><input type="text" id="cUsername" placeholder="Unique login username"><div class="err">Username required.</div></div>
+      <div class="field"><label for="cPassword">Password</label><input type="password" id="cPassword" placeholder="Min 6 characters"><div class="err">Min 6 characters.</div></div>
+      <div class="field"><label for="cAddress">Address</label><input type="text" id="cAddress" placeholder="Full address"><div class="err">Address required.</div></div>
+      <div class="field"><label for="cDistrict">District</label><input type="text" id="cDistrict" placeholder="District"><div class="err">District required.</div></div>
+      <div class="field"><label for="cState">State</label><input type="text" id="cState" placeholder="State"><div class="err">State required.</div></div>
+      <div class="field"><label for="cContact">Contact Number</label><input type="tel" id="cContact" placeholder="10-digit phone" maxlength="10"><div class="err">Valid 10-digit number required.</div></div>
+      <button class="btn" id="registerBtn" style="margin-top: 14px;">Register Center</button>
+    </div>
+    <div id="regSuccess" style="display:none;text-align:center;">
+      <div class="success-icon" style="margin: 0 auto 14px;">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="step-title">Center Registered</div>
+      <div class="step-sub">Your center ID: <strong id="centerIdDisplay"></strong></div>
+      <div style="background:#FDF3E5;border:1px solid #F5D3A6;padding:12px;border-radius:8px;margin:14px 0;font-size:0.85rem;color:#9C550E;">
+        ⏳ Your center is <strong>Pending Admin Verification</strong>. You will be notified once approved.
+      </div>
+      <a href="../center/login.html" class="btn" style="display:inline-block;text-decoration:none;margin-top:10px;">Go to Login</a>
+    </div>
+    <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--line); text-align: center; font-size: 0.85rem;">
+      Already registered? <a href="../center/login.html" style="color: var(--leaf); font-weight: 600; text-decoration: none;">Sign in here</a>
+    </div>
+  </div>
+</div>
+</div>
+<script src="/js/api.js"></script>
+<script src="/js/common.js"></script>
+<script src="/js/chatbot.js"></script>
+<script>
+document.getElementById('registerBtn').addEventListener('click', async () => {
+  const fields = {
+    name: document.getElementById('cName'),
+    username: document.getElementById('cUsername'),
+    password: document.getElementById('cPassword'),
+    address: document.getElementById('cAddress'),
+    district: document.getElementById('cDistrict'),
+    state: document.getElementById('cState'),
+    contact_number: document.getElementById('cContact')
+  };
+  let ok = true;
+  Object.entries(fields).forEach(([key, el]) => {
+    const v = el.value.trim();
+    const parent = el.closest('.field');
+    if (!v || (key === 'password' && v.length < 6) || (key === 'contact_number' && !/^[0-9]{10}$/.test(v))) {
+      parent.classList.add('invalid'); ok = false;
+    } else parent.classList.remove('invalid');
+  });
+  if (!ok) return;
+
+  const btn = document.getElementById('registerBtn');
+  btn.disabled = true; btn.textContent = 'Registering...';
+  try {
+    const data = {};
+    Object.entries(fields).forEach(([k, el]) => data[k] = el.value.trim());
+    const res = await api.registerCenter(data);
+    const center = res.data || {};
+    document.getElementById('centerIdDisplay').textContent = center.center_uid || center.center_id || '';
+    document.getElementById('regForm').style.display = 'none';
+    document.getElementById('regSuccess').style.display = 'block';
+    showToast('Center registered successfully!', 'success');
+  } catch (err) {
+    showToast(err.message || 'Registration failed.', 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Register Center';
+  }
+});
+</script>
+</body>
+</html>

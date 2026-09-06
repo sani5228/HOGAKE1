@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en" id="htmlRoot">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FASAL BAZAR </title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="home.css">
+<script src="home.js" defer></script>
+
+</head>
+<body>
+
+<header class="site-header">
+  <div class="nav-inner">
+    <a href="#home" class="brand">
+      <svg viewBox="0 0 24 24" fill="none">
+        <path d="M12 2C12 2 6 6.5 6 12.5C6 16.09 8.69 19 12 19C15.31 19 18 16.09 18 12.5C18 6.5 12 2 12 2Z" fill="#C97A2B"/>
+        <path d="M12 19V22" stroke="#4A2E1E" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+      <span>FASAL</span>
+    </a>
+
+    <div class="nav-right">
+      <ul class="nav-links">
+        <li><a href="#home" data-i18n="nav_home">Home</a></li>
+        <li><a href="farmer/login.html">Farmer Portal</a></li>
+        <li><a href="center/login.html">Center Portal</a></li>
+        <li><a href="admin/login.html">Admin</a></li>
+        <li><a href="javascript:void(0)" onclick="document.getElementById('ivrFloatBtn').click()">1800-FASAL (IVR)</a></li>
+      </ul>
+
+      <a href="farmer/register.html" class="btn-register" data-i18n="nav_register">Farmer Register</a>
+
+      <div class="lang-wrap needs-attention" id="langWrap">
+        <button class="lang-btn" id="langBtn" aria-haspopup="true" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M3 12h18M12 3c2.4 2.6 3.6 5.7 3.6 9s-1.2 6.4-3.6 9c-2.4-2.6-3.6-5.7-3.6-9s1.2-6.4 3.6-9z"/>
+          </svg>
+          <span id="langBtnLabel">EN</span>
+        </button>
+        <div class="lang-tooltip" id="langTooltip">Tap here to read this page in your language</div>
+        <div class="lang-menu" id="langMenu"></div>
+      </div>
+
+      <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobilePanel">
+      </button>
+    </div>
+  </div>
+
+  <div class="mobile-panel" id="mobilePanel">
+    <ul>
+      <li><a href="#home" data-i18n="nav_home">Home</a></li>
+      <li><a href="farmer/login.html">Farmer Portal</a></li>
+      <li><a href="center/login.html">Center Portal</a></li>
+      <li><a href="admin/login.html">Admin Portal</a></li>
+      <li><a href="javascript:void(0)" onclick="document.getElementById('ivrFloatBtn').click()">Toll-Free IVR (1800-FASAL)</a></li>
+    </ul>
+    <a href="farmer/register.html" class="btn-register" data-i18n="nav_register">Farmer Register</a>
+    <div class="mobile-lang">
+      <div class="lbl" data-i18n="lang_label">Choose language</div>
+      <div class="mobile-lang-grid" id="mobileLangGrid"></div>
+    </div>
+  </div>
+
+</header>
+<main>
+  <section class="hero" id="home">
+    <div class="hero-inner">
+      <div class="hero-copy">
+        <div class="kicker" data-i18n="hero_kicker">For growers, by growers</div>
+        <h1 data-i18n="hero_title">Plan your harvest with clarity</h1>
+        <p data-i18n="hero_body">FASAL brings weather, soil, and market data into one place, so you can decide what to sow, when to water, and where to sell — without the guesswork.</p>
+        <div class="hero-actions" style="display:flex; flex-wrap:wrap; gap:10px;">
+          <a href="farmer/login.html" class="btn btn-primary">👨‍🌾 Farmer Login</a>
+          <a href="center/login.html" class="btn btn-ghost" style="background:#FAF8F2; border:1px solid #4E7A38; color:#2C4A22;">🏢 Center Portal</a>
+          <a href="admin/login.html" class="btn btn-ghost" style="background:#FAF8F2; border:1px solid #C97A2B; color:#A5601C;">🛡️ Admin Portal</a>
+          <a href="javascript:void(0)" onclick="document.getElementById('ivrFloatBtn').click()" class="btn btn-ghost" style="background:#FAF8F2; border:1px solid #5C8A3A; color:#2C4A22;">📞 Dial 1800-FASAL (IVR)</a>
+        </div>
+      </div>
+
+      <div class="hero-art">
+        <svg viewBox="0 0 400 400" fill="none">
+          <circle cx="300" cy="90" r="46" fill="#E8B54D" opacity="0.85"/>
+          <path d="M60 320 Q200 260 340 320 L340 400 L60 400 Z" fill="#5C8A3A" opacity="0.35"/>
+          <path d="M40 350 Q200 300 360 350 L360 400 L40 400 Z" fill="#5C8A3A" opacity="0.55"/>
+          <g stroke="#4A2E1E" stroke-width="3" stroke-linecap="round">
+            <path d="M140 340 V270"/>
+            <path d="M180 340 V250"/>
+            <path d="M220 340 V265"/>
+            <path d="M260 340 V245"/>
+          </g>
+          <g fill="#C97A2B">
+            <ellipse cx="140" cy="262" rx="9" ry="16"/>
+            <ellipse cx="180" cy="242" rx="9" ry="16"/>
+            <ellipse cx="220" cy="257" rx="9" ry="16"/>
+            <ellipse cx="260" cy="237" rx="9" ry="16"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <div class="field-band">
+      <svg viewBox="0 0 1440 200" preserveAspectRatio="none">
+        <path d="M0,200 L0,100 Q360,60 720,100 T1440,100 L1440,200 Z" fill="#C9D6AE" opacity="0.6"/>
+        <path d="M0,200 L0,140 Q360,110 720,140 T1440,140 L1440,200 Z" fill="#5C8A3A" opacity="0.5"/>
+      </svg>
+    </div>
+  </section>
+
+  <section class="features" id="about">
+    <div class="section-head">
+      <h2 data-i18n="features_title">Everything your field needs, in one dashboard</h2>
+      <p data-i18n="features_sub">From sowing to selling, FASAL keeps your decisions grounded in real data rather than habit alone.</p>
+    </div>
+
+    <div class="feature-grid">
+      <div class="feature">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 15C4 15 6 8 12 8C18 8 20 15 20 15" stroke="#5C8A3A" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="8" r="2" fill="#5C8A3A"/></svg>
+        </div>
+        <h3 data-i18n="feature1_title">Weather forecasts</h3>
+        <p data-i18n="feature1_body">7-day, field-level forecasts so irrigation and spraying happen at the right moment.</p>
+      </div>
+      <div class="feature">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 3L21 8V16L12 21L3 16V8L12 3Z" stroke="#5C8A3A" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        </div>
+        <h3 data-i18n="feature2_title">Soil health tracking</h3>
+        <p data-i18n="feature2_body">Log soil tests over seasons and get simple recommendations for the next crop cycle.</p>
+      </div>
+      <div class="feature">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 19H20M7 19V11M12 19V6M17 19V13" stroke="#5C8A3A" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <h3 data-i18n="feature3_title">Market prices</h3>
+        <p data-i18n="feature3_body">Compare mandi prices nearby before you decide where and when to sell your harvest.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-strip" id="contact">
+    <div class="cta-inner">
+      <div>
+        <h2 data-i18n="cta_title">Ready to plan your next season?</h2>
+        <p data-i18n="cta_body">Setting up takes less than two minutes — just your name and phone number to begin.</p>
+      </div>
+      <a href="farmer/register.html" class="btn btn-primary" data-i18n="cta_button">Register now</a>
+    </div>
+  </section>
+</main>
+<script src="js/api.js"></script>
+<script src="js/common.js"></script>
+<script src="js/chatbot.js"></script>
+<script src="js/ivr_simulator.js"></script>
+</body>
+</html>

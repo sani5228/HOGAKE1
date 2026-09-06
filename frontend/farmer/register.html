@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FASAL — Farmer Registration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<div class="sun"></div>
+<svg class="field-rows" viewBox="0 0 1440 400" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M0,400 L0,220 Q360,160 720,220 T1440,220 L1440,400 Z" fill="#B7C68A" opacity="0.55"/>
+  <path d="M0,400 L0,270 Q360,230 720,270 T1440,270 L1440,400 Z" fill="#93AE68" opacity="0.6"/>
+  <path d="M0,400 L0,320 Q360,300 720,320 T1440,320 L1440,400 Z" fill="#6E8F4E" opacity="0.75"/>
+</svg>
+
+<div class="topbar">
+  <a href="../home.html" class="home-link">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    Back to home
+  </a>
+</div>
+
+<div class="page-center">
+<div class="wrap">
+  <div class="brand-row">
+    <svg viewBox="0 0 24 24" fill="none">
+      <path d="M12 2C12 2 6 6.5 6 12.5C6 16.09 8.69 19 12 19C15.31 19 18 16.09 18 12.5C18 6.5 12 2 12 2Z" fill="#4E7A38"/>
+      <path d="M12 19V22" stroke="#4E7A38" stroke-width="1.6" stroke-linecap="round"/>
+    </svg>
+    <h1>FASAL</h1>
+  </div>
+
+  <div class="card">
+    <!-- STEP 1: Personal Info -->
+    <div class="step active" id="step1">
+      <div class="step-title">Create your account</div>
+      <div class="step-sub">Enter your details to get started with FASAL.</div>
+
+      <div class="field" id="nameField">
+        <label for="fullName">Full name</label>
+        <input type="text" id="fullName" placeholder="e.g. Aditi Mishra" autocomplete="name">
+        <div class="err">Please enter your full name.</div>
+      </div>
+      <div class="field" id="aadhaarField">
+        <label for="aadhaar">Aadhaar card number</label>
+        <input type="text" id="aadhaar" placeholder="12-digit Aadhaar number" maxlength="12" inputmode="numeric">
+        <div class="hint">Used to verify your identity as a registered farmer.</div>
+        <div class="err">Enter a valid 12-digit Aadhaar number.</div>
+      </div>
+      <div class="field" id="phoneField">
+        <label for="phone">Phone number</label>
+        <input type="tel" id="phone" placeholder="10-digit mobile number" maxlength="10" autocomplete="tel">
+        <div class="err">Enter a valid 10-digit phone number.</div>
+      </div>
+      <div class="field" id="districtField">
+        <label for="district">District</label>
+        <input type="text" id="district" placeholder="e.g. Bhopal">
+        <div class="err">Please enter your district.</div>
+      </div>
+      <div class="field" id="stateField">
+        <label for="state">State</label>
+        <input type="text" id="state" placeholder="e.g. Madhya Pradesh">
+        <div class="err">Please enter your state.</div>
+      </div>
+      <button class="btn" id="getOtpBtn">Get OTP</button>
+    </div>
+
+    <!-- STEP 2: OTP Verification -->
+    <div class="step" id="step2">
+      <div class="step-title">Verify your number</div>
+      <div class="step-sub">We've sent a one-time code to <span id="phoneEcho"></span>.</div>
+      <div class="field" id="otpField">
+        <label for="otp">Enter OTP</label>
+        <input type="text" id="otp" placeholder="6-digit code" maxlength="6" inputmode="numeric">
+        <div class="hint">Check your backend terminal for the simulated SMS, or enter the OTP shown.</div>
+        <div class="err">Enter a valid 6-digit OTP.</div>
+      </div>
+      <button class="btn" id="verifyOtpBtn">Verify &amp; continue</button>
+      <a class="back-link" id="backTo1">&larr; Back</a>
+    </div>
+
+    <!-- STEP 3: Create Password -->
+    <div class="step" id="step3">
+      <div class="step-title">Set your password</div>
+      <div class="step-sub">Your FARM ID will be generated upon account creation.</div>
+      <div class="field" id="pwField">
+        <label for="password">Create password</label>
+        <input type="password" id="password" placeholder="At least 6 characters" autocomplete="new-password">
+        <div class="err">Password must be at least 6 characters.</div>
+      </div>
+      <div class="field" id="pwConfirmField">
+        <label for="passwordConfirm">Confirm password</label>
+        <input type="password" id="passwordConfirm" placeholder="Re-enter your password" autocomplete="new-password">
+        <div class="err">Passwords do not match.</div>
+      </div>
+      <button class="btn" id="createAccountBtn">Create account</button>
+      <a class="back-link" id="backTo2">&larr; Back</a>
+    </div>
+
+    <!-- STEP 4: Success -->
+    <div class="step success" id="step4">
+      <div class="success-icon">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="step-title">Account created successfully</div>
+      <div class="step-sub">Welcome to FASAL, <span id="nameEcho"></span>. You can now sign in with your new credentials.</div>
+      <div class="uid-display">
+        <div>
+          <span class="uid-label">FARM ID</span>
+          <span class="uid-text" id="uidFinal"></span>
+        </div>
+        <span class="uid-tag">Auto-generated</span>
+      </div>
+      <button class="btn" id="doneBtn">Continue to sign in</button>
+      <a href="../frontend/home.html" class="home-cta">Back to FASAL home</a>
+    </div>
+  </div>
+</div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/common.js"></script>
+<script src="js/chatbot.js"></script>
+<script>
+const regState = { name: '', phone: '', aadhaar: '', district: '', state: '' };
+
+const steps = {
+  1: document.getElementById('step1'),
+  2: document.getElementById('step2'),
+  3: document.getElementById('step3'),
+  4: document.getElementById('step4'),
+};
+
+function goTo(n) {
+  Object.values(steps).forEach(s => s.classList.remove('active'));
+  steps[n].classList.add('active');
+}
+
+function setError(fieldEl, show) { fieldEl.classList.toggle('invalid', show); }
+
+document.getElementById('aadhaar').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 12); });
+document.getElementById('phone').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10); });
+document.getElementById('otp').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 6); });
+
+// STEP 1 → Get OTP
+document.getElementById('getOtpBtn').addEventListener('click', async () => {
+  const name = document.getElementById('fullName').value.trim();
+  const aadhaar = document.getElementById('aadhaar').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const district = document.getElementById('district').value.trim();
+  const state = document.getElementById('state').value.trim();
+
+  const nameOk = name.length > 1;
+  const aadhaarOk = /^[0-9]{12}$/.test(aadhaar);
+  const phoneOk = /^[0-9]{10}$/.test(phone);
+  const districtOk = district.length > 0;
+  const stateOk = state.length > 0;
+
+  setError(document.getElementById('nameField'), !nameOk);
+  setError(document.getElementById('aadhaarField'), !aadhaarOk);
+  setError(document.getElementById('phoneField'), !phoneOk);
+  setError(document.getElementById('districtField'), !districtOk);
+  setError(document.getElementById('stateField'), !stateOk);
+
+  if (!nameOk || !aadhaarOk || !phoneOk || !districtOk || !stateOk) return;
+
+  Object.assign(regState, { name, phone, aadhaar, district, state });
+
+  const btn = document.getElementById('getOtpBtn');
+  btn.disabled = true; btn.textContent = 'Sending OTP...';
+  try {
+    await api.sendOtp(phone, 'REGISTRATION');
+    showToast('OTP sent! Check your backend terminal.', 'success');
+    document.getElementById('phoneEcho').textContent = phone.replace(/(\d{6})(\d{4})/, 'XXXXXX$2');
+    goTo(2);
+  } catch (err) {
+    showToast(err.message || 'Failed to send OTP.', 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Get OTP';
+  }
+});
+
+document.getElementById('backTo1').addEventListener('click', () => goTo(1));
+
+// STEP 2 → Verify OTP
+document.getElementById('verifyOtpBtn').addEventListener('click', async () => {
+  const otp = document.getElementById('otp').value.trim();
+  if (!/^[0-9]{6}$/.test(otp)) { setError(document.getElementById('otpField'), true); return; }
+  setError(document.getElementById('otpField'), false);
+
+  const btn = document.getElementById('verifyOtpBtn');
+  btn.disabled = true; btn.textContent = 'Verifying...';
+  try {
+    await api.verifyOtp(regState.phone, otp);
+    showToast('Mobile verified!', 'success');
+    goTo(3);
+  } catch (err) {
+    showToast(err.message || 'Invalid OTP', 'error');
+    setError(document.getElementById('otpField'), true);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Verify & continue';
+  }
+});
+
+document.getElementById('backTo2').addEventListener('click', () => goTo(2));
+
+// STEP 3 → Create account
+document.getElementById('createAccountBtn').addEventListener('click', async () => {
+  const pw = document.getElementById('password').value;
+  const pwc = document.getElementById('passwordConfirm').value;
+
+  const pwOk = pw.length >= 6;
+  const matchOk = pw === pwc;
+
+  setError(document.getElementById('pwField'), !pwOk);
+  setError(document.getElementById('pwConfirmField'), !matchOk);
+  if (!pwOk || !matchOk) return;
+
+  const btn = document.getElementById('createAccountBtn');
+  btn.disabled = true; btn.textContent = 'Creating account...';
+  try {
+    const res = await api.registerFarmer({
+      full_name: regState.name,
+      aadhaar_number: regState.aadhaar,
+      mobile_number: regState.phone,
+      password: pw,
+      district: regState.district,
+      state: regState.state
+    });
+    const farmer = res.data.farmer || res.data;
+    const farmId = farmer.farmer_uid || farmer.farmer_id || '';
+
+    document.getElementById('nameEcho').textContent = regState.name;
+    document.getElementById('uidFinal').textContent = farmId;
+    showToast('Account created successfully!', 'success');
+    goTo(4);
+  } catch (err) {
+    showToast(err.message || 'Registration failed.', 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Create account';
+  }
+});
+
+document.getElementById('doneBtn').addEventListener('click', () => {
+  window.location.href = 'farmer/login.html';
+});
+</script>
+</body>
+</html>

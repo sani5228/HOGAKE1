@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FASAL — Farmer Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/style.css">
+<style>
+  .dashboard-layout { display: flex; min-height: 100vh; }
+  .sidebar { width: 260px; background: #2C4A22; color: #fff; padding: 24px 0; display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; }
+  .sidebar .brand-row { display: flex; align-items: center; gap: 10px; padding: 0 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.15); }
+  .sidebar .brand-row svg { width: 28px; height: 28px; }
+  .sidebar .brand-row h2 { font-family: var(--font-display); font-size: 1.4rem; letter-spacing: 0.03em; }
+  .sidebar .user-info { padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,0.15); font-size: 0.85rem; }
+  .sidebar .user-info .uid { color: rgba(255,255,255,0.6); font-size: 0.75rem; margin-top: 4px; }
+  .sidebar nav { flex: 1; padding: 12px 0; }
+  .sidebar nav a { display: flex; align-items: center; gap: 10px; padding: 11px 20px; color: rgba(255,255,255,0.8); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: background 0.15s, color 0.15s; border-left: 3px solid transparent; }
+  .sidebar nav a:hover, .sidebar nav a.active { background: rgba(255,255,255,0.1); color: #fff; border-left-color: #C97A2B; }
+  .sidebar .logout-btn { margin: 12px 20px 0; padding: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; }
+  .sidebar .logout-btn:hover { background: rgba(168,68,44,0.6); }
+  .main-content { margin-left: 260px; flex: 1; padding: 28px 32px; background: linear-gradient(180deg, #F7F2E7 0%, #EDE8D6 100%); min-height: 100vh; }
+  .main-content h1 { font-family: var(--font-display); color: var(--soil, #3B2C1F); font-size: 1.6rem; margin-bottom: 6px; }
+  .main-content .subtitle { color: var(--muted, #6E7A5E); font-size: 0.9rem; margin-bottom: 24px; }
+  .view-section { display: none; }
+  .view-section.active { display: block; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .kpi-card { background: #fff; border-radius: 10px; padding: 20px; border: 1px solid #DCD4BF; }
+  .kpi-card .kpi-label { font-size: 0.8rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .kpi-card .kpi-value { font-family: var(--font-display); font-size: 1.8rem; color: var(--soil); }
+  .section-card { background: #fff; border-radius: 10px; padding: 22px; border: 1px solid #DCD4BF; margin-bottom: 20px; }
+  .section-card h3 { font-family: var(--font-display); font-size: 1.15rem; color: var(--soil); margin-bottom: 14px; }
+  .estimate-box { background: #FAF8F2; border: 1px solid #DCD4BF; border-radius: 8px; padding: 16px; margin: 14px 0; }
+  .estimate-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 0.88rem; }
+  .estimate-row .val { font-weight: 600; color: var(--soil); }
+  .form-row { margin-bottom: 14px; }
+  .form-row label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--soil); margin-bottom: 5px; }
+  .form-row select, .form-row input { width: 100%; padding: 10px 12px; border: 1px solid #DCD4BF; border-radius: 6px; font-size: 0.9rem; background: #fff; }
+  .action-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); }
+  .empty-state .icon { font-size: 2.5rem; margin-bottom: 10px; }
+  .crop-chip { display: inline-flex; align-items: center; gap: 6px; background: #EAF4DE; color: #2C4A22; padding: 5px 10px; border-radius: 14px; font-size: 0.8rem; font-weight: 500; margin: 3px; }
+  .profile-field { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0ece0; font-size: 0.9rem; }
+  .profile-field .label { color: var(--muted); font-weight: 600; }
+  .profile-field .value { color: var(--soil); }
+  .crop-grid { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+  .crop-check { display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #DCD4BF; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+  .crop-check input { accent-color: #5C8A3A; }
+  .crop-check.checked { background: #EAF4DE; border-color: #5C8A3A; }
+  @media (max-width: 768px) {
+    .sidebar { width: 100%; position: relative; }
+    .main-content { margin-left: 0; padding: 20px 16px; }
+    .dashboard-layout { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<div class="dashboard-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand-row">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 2C12 2 6 6.5 6 12.5C6 16.09 8.69 19 12 19C15.31 19 18 16.09 18 12.5C18 6.5 12 2 12 2Z" fill="#C97A2B"/><path d="M12 19V22" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <h2>FASAL</h2>
+    </div>
+    <div class="user-info">
+      <div id="farmerNameDisplay">Farmer</div>
+      <div class="uid" id="farmerUidDisplay">—</div>
+    </div>
+    <nav>
+      <a href="#" class="nav-item active" data-view="dashboard">🏠 Dashboard</a>
+      <a href="#" class="nav-item" data-view="book-slot">📋 Book Slot</a>
+      <a href="#" class="nav-item" data-view="bookings">📑 My Bookings</a>
+      <a href="#" class="nav-item" data-view="history">💰 Procurement History</a>
+      <a href="#" class="nav-item" data-view="profile">👤 Profile</a>
+    </nav>
+    <button class="logout-btn" id="logoutBtn">Sign Out</button>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+
+    <!-- DASHBOARD VIEW -->
+    <div class="view-section active" id="view-dashboard">
+      <h1 id="welcomeMsg">Welcome back!</h1>
+      <p class="subtitle">Your farming procurement dashboard at a glance.</p>
+      <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-label">Total Bookings</div><div class="kpi-value" id="kpiTotalBookings">0</div></div>
+        <div class="kpi-card"><div class="kpi-label">Active Bookings</div><div class="kpi-value" id="kpiActiveBookings">0</div></div>
+        <div class="kpi-card"><div class="kpi-label">Completed</div><div class="kpi-value" id="kpiCompleted">0</div></div>
+        <div class="kpi-card"><div class="kpi-label">Total Earnings</div><div class="kpi-value" id="kpiEarnings">₹0</div></div>
+      </div>
+      <div class="section-card" id="activeBookingCard" style="display:none;">
+        <h3>Active Booking</h3>
+        <div id="activeBookingContent"></div>
+      </div>
+    </div>
+
+    <!-- BOOK SLOT VIEW -->
+    <div class="view-section" id="view-book-slot">
+      <h1>Book a Procurement Slot</h1>
+      <p class="subtitle">Select your crop and quantity. The system will automatically assign the best available date and center.</p>
+      <div class="section-card">
+        <div class="form-row">
+          <label for="cropSelect">Select Crop (In-Season)</label>
+          <select id="cropSelect"><option value="">— Loading crops —</option></select>
+        </div>
+        <div class="form-row">
+          <label for="qtyInput">Quantity (Quintals)</label>
+          <input type="number" id="qtyInput" min="1" step="0.5" placeholder="e.g. 10" value="">
+        </div>
+        <div class="estimate-box" id="estimateBox" style="display:none;">
+          <div class="estimate-row"><span>Crop</span><span class="val" id="estCrop">—</span></div>
+          <div class="estimate-row"><span>Rate / Quintal (MSP)</span><span class="val" id="estRate">—</span></div>
+          <div class="estimate-row"><span>Estimated Time</span><span class="val" id="estTime">—</span></div>
+          <div class="estimate-row" style="border-top: 1px solid #DCD4BF; padding-top: 8px; margin-top: 8px;">
+            <span><strong>Estimated Total Value</strong></span><span class="val" style="color: #4E7A38; font-size: 1.1rem;" id="estTotal">—</span>
+          </div>
+        </div>
+        <button class="btn-sm btn-primary" id="bookSlotBtn" style="padding: 12px 28px; font-size: 0.95rem; margin-top: 8px;" disabled>Book Slot</button>
+      </div>
+      <div class="section-card" id="bookingResult" style="display:none;">
+        <h3>✅ Slot Booked Successfully!</h3>
+        <div id="bookingResultContent"></div>
+      </div>
+    </div>
+
+    <!-- MY BOOKINGS VIEW -->
+    <div class="view-section" id="view-bookings">
+      <h1>My Bookings</h1>
+      <p class="subtitle">Track and manage your procurement slot bookings.</p>
+      <div class="section-card">
+        <div class="table-wrap">
+          <table class="data-table" id="bookingsTable">
+            <thead><tr><th>Token #</th><th>Crop</th><th>Quantity</th><th>Center</th><th>Date</th><th>Time</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="bookingsBody"><tr><td colspan="8" class="empty-state">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROCUREMENT HISTORY VIEW -->
+    <div class="view-section" id="view-history">
+      <h1>Procurement &amp; Payment History</h1>
+      <p class="subtitle">Records of completed procurement and payment status.</p>
+      <div class="section-card">
+        <div class="table-wrap">
+          <table class="data-table" id="historyTable">
+            <thead><tr><th>Date</th><th>Crop</th><th>Center</th><th>Expected</th><th>Actual</th><th>Rate</th><th>Amount</th><th>Payment</th></tr></thead>
+            <tbody id="historyBody"><tr><td colspan="8" class="empty-state">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROFILE VIEW -->
+    <div class="view-section" id="view-profile">
+      <h1>My Profile</h1>
+      <p class="subtitle">Manage your personal details and crop preferences.</p>
+      <div class="section-card">
+        <h3>Personal Information</h3>
+        <div id="profileFields"></div>
+      </div>
+      <div class="section-card">
+        <h3>My Registered Crops</h3>
+        <p style="font-size:0.85rem;color:var(--muted);margin-bottom:10px;">Select the crops you grow. This helps us match you with the right procurement center.</p>
+        <div class="crop-grid" id="cropGrid"></div>
+        <button class="btn-sm btn-primary" id="saveCropsBtn" style="margin-top:14px; padding: 10px 24px;">Save Crop Preferences</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Booking Modal -->
+<div class="modal-overlay" id="bookingModal">
+  <div class="modal-card">
+    <div class="modal-head"><h3 id="modalTitle">Booking Details</h3><button class="modal-close" onclick="closeModal('bookingModal')">✕</button></div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/common.js"></script>
+<script src="/js/chatbot.js"></script>
+<script src="/js/ivr_simulator.js"></script>
+<script>
+// Auth guard
+if (!checkAuthGuard('farmer')) throw new Error('Redirecting...');
+
+let farmerProfile = null;
+let allCrops = [];
+let farmerCropIds = [];
+
+// Navigation
+document.querySelectorAll('.nav-item').forEach(a => {
+  a.addEventListener('click', (e) => {
+    e.preventDefault();
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    a.classList.add('active');
+    const view = a.dataset.view;
+    document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + view).classList.add('active');
+    if (view === 'book-slot') loadEligibleCrops();
+    if (view === 'bookings') loadBookings();
+    if (view === 'history') loadHistory();
+    if (view === 'profile') loadProfile();
+  });
+});
+
+document.getElementById('logoutBtn').addEventListener('click', () => { api.logout(); });
+
+// Init
+async function init() {
+  try {
+    const res = await api.getFarmerProfile();
+    farmerProfile = res.data;
+    document.getElementById('farmerNameDisplay').textContent = farmerProfile.full_name || 'Farmer';
+    document.getElementById('farmerUidDisplay').textContent = farmerProfile.farmer_uid || '';
+    document.getElementById('welcomeMsg').textContent = `Welcome back, ${(farmerProfile.full_name || 'Farmer').split(' ')[0]}!`;
+    farmerCropIds = (farmerProfile.crops || []).map(c => c.crop_id || c.id);
+    loadDashboard();
+  } catch (err) {
+    showToast('Failed to load profile. Please log in again.', 'error');
+    setTimeout(() => api.logout(), 1500);
+  }
+}
+
+async function loadDashboard() {
+  try {
+    const [bookingsRes, historyRes] = await Promise.all([
+      api.getFarmerBookings(),
+      api.getFarmerProcurements()
+    ]);
+    const bookings = bookingsRes.data || [];
+    const history = historyRes.data || [];
+
+    const total = bookings.length;
+    const active = bookings.filter(b => ['BOOKED','SCHEDULED','ARRIVED','PROCUREMENT'].includes((b.status||'').toUpperCase())).length;
+    const completed = bookings.filter(b => (b.status||'').toUpperCase() === 'COMPLETED').length;
+    const earnings = history.reduce((sum, h) => sum + (h.payment_amount || h.amount || 0), 0);
+
+    document.getElementById('kpiTotalBookings').textContent = total;
+    document.getElementById('kpiActiveBookings').textContent = active;
+    document.getElementById('kpiCompleted').textContent = completed;
+    document.getElementById('kpiEarnings').textContent = formatCurrency(earnings);
+
+    // Show first active booking with pipeline
+    const activeBooking = bookings.find(b => ['BOOKED','SCHEDULED','ARRIVED','PROCUREMENT'].includes((b.status||'').toUpperCase()));
+    const card = document.getElementById('activeBookingCard');
+    if (activeBooking) {
+      card.style.display = 'block';
+      const statuses = ['BOOKED','SCHEDULED','ARRIVED','PROCUREMENT','COMPLETED'];
+      const currentIdx = statuses.indexOf((activeBooking.status||'').toUpperCase());
+      let pipelineHtml = '<div class="pipeline">';
+      statuses.forEach((s, i) => {
+        let cls = '';
+        if (i < currentIdx) cls = 'done';
+        else if (i === currentIdx) cls = 'active';
+        pipelineHtml += `<div class="pipe-step ${cls}"><div class="pipe-dot">${i < currentIdx ? '✓' : i + 1}</div><div class="pipe-label">${s}</div></div>`;
+      });
+      pipelineHtml += '</div>';
+      document.getElementById('activeBookingContent').innerHTML = `
+        <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:14px;">
+          <div><strong>Token:</strong> ${activeBooking.token_number || '—'}</div>
+          <div><strong>Crop:</strong> ${activeBooking.crop_name || '—'}</div>
+          <div><strong>Qty:</strong> ${activeBooking.expected_quantity_quintal || '—'} qtl</div>
+          <div><strong>Date:</strong> ${formatDate(activeBooking.scheduled_date)}</div>
+          <div><strong>Center:</strong> ${activeBooking.center_name || '—'}</div>
+        </div>
+        ${pipelineHtml}
+      `;
+    } else {
+      card.style.display = 'none';
+    }
+  } catch (err) {
+    console.error('Dashboard load error:', err);
+  }
+}
+
+// Book Slot
+let estimateTimeout;
+async function loadEligibleCrops() {
+  try {
+    const res = await api.getEligibleCrops();
+    const crops = res.data || [];
+    const sel = document.getElementById('cropSelect');
+    sel.innerHTML = '<option value="">— Select a crop —</option>';
+    crops.forEach(c => {
+      sel.innerHTML += `<option value="${c.crop_id}" data-rate="${c.rate_per_quintal}">${c.name} (${c.season}) — ₹${c.rate_per_quintal}/qtl</option>`;
+    });
+  } catch (err) {
+    showToast('Could not load eligible crops.', 'error');
+  }
+}
+
+function updateEstimate() {
+  clearTimeout(estimateTimeout);
+  const cropId = document.getElementById('cropSelect').value;
+  const qty = parseFloat(document.getElementById('qtyInput').value);
+  const box = document.getElementById('estimateBox');
+  const btn = document.getElementById('bookSlotBtn');
+
+  if (!cropId || !qty || qty <= 0) { box.style.display = 'none'; btn.disabled = true; return; }
+
+  estimateTimeout = setTimeout(async () => {
+    try {
+      const res = await api.estimateBooking(cropId, qty);
+      const d = res.data;
+      document.getElementById('estCrop').textContent = d.crop_name;
+      document.getElementById('estRate').textContent = formatCurrency(d.rate_per_quintal);
+      document.getElementById('estTime').textContent = d.estimated_time_minutes + ' min';
+      document.getElementById('estTotal').textContent = formatCurrency(d.estimated_total_value);
+      box.style.display = 'block';
+      btn.disabled = false;
+    } catch (err) {
+      box.style.display = 'none';
+      btn.disabled = true;
+    }
+  }, 400);
+}
+
+document.getElementById('cropSelect').addEventListener('change', updateEstimate);
+document.getElementById('qtyInput').addEventListener('input', updateEstimate);
+
+document.getElementById('bookSlotBtn').addEventListener('click', async () => {
+  const cropId = parseInt(document.getElementById('cropSelect').value);
+  const qty = parseFloat(document.getElementById('qtyInput').value);
+  if (!cropId || !qty) return;
+
+  const btn = document.getElementById('bookSlotBtn');
+  btn.disabled = true; btn.textContent = 'Booking...';
+  try {
+    const res = await api.createBooking(cropId, qty, 'WEB');
+    const b = res.data;
+    showToast('Slot booked successfully!', 'success');
+    document.getElementById('bookingResult').style.display = 'block';
+    document.getElementById('bookingResultContent').innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:0.9rem;">
+        <div><strong>Token:</strong> ${b.token_number}</div>
+        <div><strong>Date:</strong> ${formatDate(b.scheduled_date)}</div>
+        <div><strong>Center:</strong> ${b.center_name || 'Assigned'}</div>
+        <div><strong>Time Window:</strong> ${formatTime(b.estimated_start_time)} — ${formatTime(b.estimated_end_time)}</div>
+        <div><strong>Crop:</strong> ${b.crop_name || ''}</div>
+        <div><strong>Quantity:</strong> ${b.expected_quantity_quintal} qtl</div>
+      </div>
+      <p style="margin-top:14px;font-size:0.85rem;color:var(--muted);">Please arrive at the center on the scheduled date with your token number.</p>
+    `;
+    document.getElementById('cropSelect').value = '';
+    document.getElementById('qtyInput').value = '';
+    document.getElementById('estimateBox').style.display = 'none';
+  } catch (err) {
+    showToast(err.message || 'Booking failed.', 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Book Slot';
+  }
+});
+
+// My Bookings
+async function loadBookings() {
+  try {
+    const res = await api.getFarmerBookings();
+    const bookings = res.data || [];
+    const tbody = document.getElementById('bookingsBody');
+    if (bookings.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="icon">📋</div>No bookings found. Book your first slot!</td></tr>';
+      return;
+    }
+    tbody.innerHTML = bookings.map(b => {
+      const status = (b.status || '').toUpperCase();
+      let actions = '';
+      if (['BOOKED','SCHEDULED'].includes(status)) {
+        actions = `<button class="btn-sm btn-danger" onclick="cancelBooking(${b.booking_id})">Cancel</button>`;
+      } else if (status === 'CANCELLED') {
+        actions = `<button class="btn-sm btn-secondary" onclick="rebookBooking(${b.booking_id})">Rebook</button>`;
+      }
+      return `<tr>
+        <td><strong>${b.token_number || '—'}</strong></td>
+        <td>${b.crop_name || '—'}</td>
+        <td>${b.expected_quantity_quintal} qtl</td>
+        <td>${b.center_name || '—'}</td>
+        <td>${formatDate(b.scheduled_date)}</td>
+        <td>${formatTime(b.estimated_start_time) || '—'}</td>
+        <td>${formatStatusBadge(b.status)}</td>
+        <td>${actions}</td>
+      </tr>`;
+    }).join('');
+  } catch (err) {
+    showToast('Could not load bookings.', 'error');
+  }
+}
+
+async function cancelBooking(id) {
+  if (!confirm('Cancel this booking? The slot capacity will be released.')) return;
+  try {
+    await api.cancelBooking(id);
+    showToast('Booking cancelled successfully.', 'success');
+    loadBookings();
+  } catch (err) { showToast(err.message || 'Cancellation failed.', 'error'); }
+}
+
+async function rebookBooking(id) {
+  try {
+    await api.rebookBooking(id);
+    showToast('Booking rescheduled! New slot assigned.', 'success');
+    loadBookings();
+  } catch (err) { showToast(err.message || 'Rebooking failed.', 'error'); }
+}
+
+// Procurement History
+async function loadHistory() {
+  try {
+    const res = await api.getFarmerProcurements();
+    const records = res.data || [];
+    const tbody = document.getElementById('historyBody');
+    if (records.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="icon">💰</div>No procurement records yet.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = records.map(r => `<tr>
+      <td>${formatDate(r.procurement_date || r.created_at)}</td>
+      <td>${r.crop_name || '—'}</td>
+      <td>${r.center_name || '—'}</td>
+      <td>${r.expected_quantity || '—'} qtl</td>
+      <td>${r.actual_weight_quintal || '—'} qtl</td>
+      <td>${formatCurrency(r.rate_per_quintal)}</td>
+      <td>${formatCurrency(r.payment_amount || r.amount)}</td>
+      <td>${formatStatusBadge(r.payment_status || 'PENDING')}</td>
+    </tr>`).join('');
+  } catch (err) {
+    showToast('Could not load history.', 'error');
+  }
+}
+
+// Profile
+async function loadProfile() {
+  if (!farmerProfile) return;
+  const fields = [
+    { label: 'FARM ID', value: farmerProfile.farmer_uid },
+    { label: 'Full Name', value: farmerProfile.full_name },
+    { label: 'Mobile Number', value: farmerProfile.mobile_number },
+    { label: 'Aadhaar (Masked)', value: farmerProfile.masked_aadhaar || 'XXXX-XXXX-' + (farmerProfile.aadhaar_last4 || '****') },
+    { label: 'District', value: farmerProfile.district },
+    { label: 'State', value: farmerProfile.state },
+    { label: 'Status', value: farmerProfile.status },
+  ];
+  document.getElementById('profileFields').innerHTML = fields.map(f =>
+    `<div class="profile-field"><span class="label">${f.label}</span><span class="value">${f.value || '—'}</span></div>`
+  ).join('');
+
+  // Load all crops for selection
+  try {
+    const res = await api.getEligibleCrops();
+    allCrops = res.data || [];
+  } catch (e) {
+    // Try admin crops endpoint as fallback
+    try { const r2 = await api.listCrops(null, false); allCrops = r2.data || []; } catch(e2){}
+  }
+  farmerCropIds = (farmerProfile.crops || []).map(c => c.crop_id || c.id);
+  const grid = document.getElementById('cropGrid');
+  grid.innerHTML = allCrops.map(c => {
+    const checked = farmerCropIds.includes(c.crop_id) ? 'checked' : '';
+    return `<label class="crop-check ${checked ? 'checked' : ''}">
+      <input type="checkbox" value="${c.crop_id}" ${checked}> ${c.name} (${c.season})
+    </label>`;
+  }).join('');
+
+  grid.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      cb.closest('.crop-check').classList.toggle('checked', cb.checked);
+    });
+  });
+}
+
+document.getElementById('saveCropsBtn').addEventListener('click', async () => {
+  const selected = [...document.querySelectorAll('#cropGrid input:checked')].map(cb => parseInt(cb.value));
+  try {
+    await api.updateFarmerCrops(selected);
+    showToast('Crop preferences saved!', 'success');
+    farmerCropIds = selected;
+  } catch (err) {
+    showToast(err.message || 'Failed to update crops.', 'error');
+  }
+});
+
+init();
+</script>
+</body>
+</html>
