@@ -7,6 +7,7 @@ from backend.config import Config
 from backend.database import init_db, SessionLocal
 from backend.database import init_db, SessionLocal
 from backend.models.user import AdminUser
+from backend.seed import seed_database
 from backend.utils.responses import error_response
 
 # Import Blueprints
