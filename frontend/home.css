@@ -1,4 +1,4 @@
-  :root {
+:root {
     --harvest: #C97A2B;
     --harvest-dark: #A5601C;
     --wheat: #E8B54D;
@@ -112,6 +112,102 @@
   }
 
   .btn-register:hover { background: var(--harvest-dark); }
+
+  /* ---------- Farmer Services dropdown (desktop) ---------- */
+  .services-wrap {
+    position: relative;
+  }
+
+  .services-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--muted);
+    padding: 9px 13px;
+    border-radius: 7px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease;
+  }
+
+  .services-btn:hover,
+  .services-btn:focus-visible,
+  .services-wrap.open .services-btn {
+    color: var(--soil);
+    background: rgba(92, 138, 58, 0.09);
+  }
+
+  .services-btn .caret {
+    font-size: 0.75rem;
+    transition: transform 0.15s ease;
+  }
+
+  .services-wrap.open .services-btn .caret {
+    transform: rotate(180deg);
+  }
+
+  .services-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: 0 14px 34px -14px rgba(42, 46, 34, 0.28);
+    min-width: 280px;
+    padding: 8px;
+    display: none;
+    z-index: 320;
+  }
+
+  .services-wrap.open .services-menu {
+    display: block;
+  }
+
+  .services-menu a {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    text-decoration: none;
+    padding: 9px 10px;
+    border-radius: 8px;
+    color: var(--ink);
+    transition: background 0.15s ease;
+  }
+
+  .services-menu a:hover,
+  .services-menu a:focus-visible {
+    background: rgba(92, 138, 58, 0.1);
+    outline: none;
+  }
+
+  .services-menu .svc-icon {
+    font-size: 1.1rem;
+    line-height: 1.3;
+    flex-shrink: 0;
+  }
+
+  .services-menu .svc-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .services-menu .svc-text strong {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--soil);
+  }
+
+  .services-menu .svc-text small {
+    font-size: 0.76rem;
+    color: var(--muted);
+  }
 
   /* ---------- language switcher ---------- */
   .lang-wrap {
@@ -262,8 +358,9 @@
   }
 
   .mobile-panel.open {
-    max-height: 460px;
+    max-height: 720px;
     border-top-color: var(--line);
+    overflow-y: auto;
   }
 
   .mobile-panel ul {
@@ -286,6 +383,54 @@
     text-align: center;
     margin: 14px 24px 6px;
     padding: 12px 4px;
+  }
+
+  /* ---------- Farmer Services (mobile) ---------- */
+  .mobile-services { border-bottom: 1px solid var(--line); }
+
+  .mobile-services-toggle {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: none;
+    border: none;
+    text-align: left;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--ink);
+    padding: 13px 4px;
+    cursor: pointer;
+  }
+
+  .mobile-services-toggle .caret {
+    font-size: 0.85rem;
+    color: var(--muted);
+    transition: transform 0.15s ease;
+  }
+
+  .mobile-services-toggle[aria-expanded="true"] .caret {
+    transform: rotate(180deg);
+  }
+
+  .mobile-services-list {
+    list-style: none;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.25s ease;
+    padding-left: 10px;
+  }
+
+  .mobile-services-list.open {
+    max-height: 360px;
+  }
+
+  .mobile-services-list li a {
+    padding: 10px 4px;
+    font-size: 0.92rem;
+    color: var(--sprout);
+    border-bottom: 1px dashed var(--line);
   }
 
   .mobile-lang {
