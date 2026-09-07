@@ -53,7 +53,12 @@ def seed_database():
         print("  ✓ Seeded Administrator (username: admin, pass: AdminPassword@123)")
 
         # 2. Seed Crops (Official MSP Rates)
+        # NOTE: Expanded catalog (CHANGE 1) — the original 8 crops are preserved exactly
+        # as they were (same names, rates, unload times, seasons) so no existing crop_id
+        # references, bookings, or farmer/center relationships are broken. New crops are
+        # appended after them so their crop_id values simply continue the existing sequence.
         crops_data = [
+            # ---- Existing crops (unchanged) ----
             {"name": "Soybean", "category": "Oilseeds", "rate": 4600.00, "unload_min": 4, "season": "Kharif"},
             {"name": "Paddy / Rice", "category": "Cereals", "rate": 2183.00, "unload_min": 6, "season": "Kharif"},
             {"name": "Moong (Green Gram)", "category": "Pulses", "rate": 8558.00, "unload_min": 4, "season": "Kharif"},
@@ -62,6 +67,17 @@ def seed_database():
             {"name": "Wheat", "category": "Cereals", "rate": 2275.00, "unload_min": 5, "season": "Rabi"},
             {"name": "Gram / Chana", "category": "Pulses", "rate": 5440.00, "unload_min": 5, "season": "Rabi"},
             {"name": "Mustard", "category": "Oilseeds", "rate": 5650.00, "unload_min": 4, "season": "Rabi"},
+
+            # ---- New crops added for a more realistic demo farmer crop selection ----
+            {"name": "Arhar / Tur", "category": "Pulses", "rate": 7550.00, "unload_min": 5, "season": "Kharif"},
+            {"name": "Bajra", "category": "Cereals", "rate": 2625.00, "unload_min": 4, "season": "Kharif"},
+            {"name": "Jowar", "category": "Cereals", "rate": 3371.00, "unload_min": 4, "season": "Kharif"},
+            {"name": "Masoor", "category": "Pulses", "rate": 6700.00, "unload_min": 4, "season": "Rabi"},
+            {"name": "Urad", "category": "Pulses", "rate": 7400.00, "unload_min": 4, "season": "Kharif"},
+            {"name": "Groundnut", "category": "Oilseeds", "rate": 6783.00, "unload_min": 5, "season": "Kharif"},
+            {"name": "Sunflower", "category": "Oilseeds", "rate": 7280.00, "unload_min": 4, "season": "Kharif"},
+            {"name": "Sesame / Til", "category": "Oilseeds", "rate": 9267.00, "unload_min": 4, "season": "Kharif"},
+            {"name": "Barley", "category": "Cereals", "rate": 1980.00, "unload_min": 4, "season": "Rabi"},
         ]
 
         crop_map = {}
@@ -93,7 +109,13 @@ def seed_database():
                 "village_town": "Sanwer Road",
                 "status": "ACTIVE",
                 "daily_cap": 420,
-                "crops": ["Soybean", "Paddy / Rice", "Moong (Green Gram)", "Maize", "Wheat", "Gram / Chana", "Mustard"]
+                # Center 1 accepts the widest crop range, including all newly added crops,
+                # so the expanded demo farmer's crops remain bookable end-to-end.
+                "crops": [
+                    "Soybean", "Paddy / Rice", "Moong (Green Gram)", "Maize", "Wheat",
+                    "Gram / Chana", "Mustard", "Arhar / Tur", "Bajra", "Jowar",
+                    "Masoor", "Urad", "Groundnut", "Sunflower", "Sesame / Til", "Barley"
+                ]
             },
             {
                 "id": "PC000002",
@@ -105,7 +127,7 @@ def seed_database():
                 "village_town": "Barnagar Mandi",
                 "status": "ACTIVE",
                 "daily_cap": 420,
-                "crops": ["Soybean", "Cotton", "Moong (Green Gram)", "Wheat", "Gram / Chana"]
+                "crops": ["Soybean", "Cotton", "Moong (Green Gram)", "Wheat", "Gram / Chana", "Groundnut", "Sunflower"]
             },
             {
                 "id": "PC000003",
@@ -175,7 +197,12 @@ def seed_database():
                 "state": "Madhya Pradesh",
                 "district": "Indore",
                 "village_town": "Depalpur",
-                "crops": ["Soybean", "Wheat", "Gram / Chana"]
+                # CHANGE 1: default/demo farmer now has a realistic, wider crop selection
+                # spanning Kharif + Rabi, cereals/pulses/oilseeds, instead of just 3 crops.
+                "crops": [
+                    "Soybean", "Wheat", "Gram / Chana", "Mustard", "Maize",
+                    "Arhar / Tur", "Bajra", "Groundnut", "Sunflower", "Masoor"
+                ]
             },
             {
                 "id": "FA000102",
@@ -185,7 +212,7 @@ def seed_database():
                 "state": "Madhya Pradesh",
                 "district": "Ujjain",
                 "village_town": "Ghatiya",
-                "crops": ["Paddy / Rice", "Moong (Green Gram)", "Maize"]
+                "crops": ["Paddy / Rice", "Moong (Green Gram)", "Maize", "Urad", "Jowar"]
             },
             {
                 "id": "FA000103",
@@ -195,7 +222,7 @@ def seed_database():
                 "state": "Madhya Pradesh",
                 "district": "Indore",
                 "village_town": "Rau",
-                "crops": ["Soybean", "Cotton", "Wheat"]
+                "crops": ["Soybean", "Cotton", "Wheat", "Barley", "Sesame / Til"]
             }
         ]
 
