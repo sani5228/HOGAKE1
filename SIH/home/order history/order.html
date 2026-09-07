@@ -1,0 +1,1751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farmer Crop Procurement & Order History</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Inter + Outfit for modern agricultural feel) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- html2pdf.js for PDF export functionality -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        agri: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                            dark: '#0f381e'
+                        },
+                        amber: {
+                            50: '#fffbeb',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                            700: '#b45309'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        heading: ['Outfit', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        h1, h2, h3, .font-heading { font-family: 'Outfit', sans-serif; }
+        .crop-badge { transition: all 0.2s ease-in-out; }
+        .crop-badge:hover { transform: translateY(-1px); }
+        
+        /* Language Dropdown Styling */
+        .lang-select {
+            background-color: #166534;
+            color: #ffffff;
+            border: 1px solid #22c55e;
+            padding: 0.35rem 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .lang-select:hover, .lang-select:focus {
+            background-color: #15803d;
+            border-color: #4ade80;
+        }
+
+        /* Print Styles for Receipt */
+        @media print {
+            body * { visibility: hidden; }
+            #printableReceipt, #printableReceipt * { visibility: visible; }
+            #printableReceipt { position: absolute; left: 0; top: 0; width: 100%; padding: 0; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="text-slate-800 bg-slate-50 min-h-screen flex flex-col">
+
+    <header class="bg-agri-900 text-white shadow-lg sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-agri-700 p-2.5 rounded-xl text-amber-400 shadow-inner">
+                    <i class="fa-solid fa-wheat-awn fa-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-wide font-heading text-white flex items-center gap-2">
+                        <span>KisanKosh</span> 
+                        <span data-i18n="appBadge" class="text-xs bg-agri-700 text-amber-300 font-normal px-2 py-0.5 rounded-full border border-agri-600">Procurement Ledger</span>
+                    </h1>
+                    <p data-i18n="appSubheading" class="text-xs text-agri-200">Krishi Mandi Crop Sales & Payment Database</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2.5 flex-wrap">
+                <!-- Language Selector -->
+                <div class="flex items-center gap-1.5 bg-agri-800/80 px-2.5 py-1 rounded-xl border border-agri-700">
+                    <i class="fa-solid fa-language text-amber-400 text-base"></i>
+                    <select id="languageSelect" onchange="changeLanguage(this.value)" class="lang-select text-xs">
+                        <option value="en">English</option>
+                        <option value="hi">हिंदी (Hindi)</option>
+                        <option value="ta">தமிழ் (Tamil)</option>
+                        <option value="pa">ਪੰਜਾਬੀ (Punjabi)</option>
+                        <option value="te">తెలుగు (Telugu)</option>
+                        <option value="as">অসমীয়া (Assamese)</option>
+                        <option value="kn">ಕನ್ನಡ (Kannada)</option>
+                    </select>
+                </div>
+
+                <button onclick="openNewOrderModal()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold text-xs sm:text-sm px-3.5 py-2 rounded-lg transition-all shadow-md hover:shadow-lg flex items-center gap-1.5">
+                    <i class="fa-solid fa-plus"></i>
+                    <span data-i18n="btnRecordSale">Record New Sale</span>
+                </button>
+                <button onclick="exportToCSV()" class="bg-agri-800 hover:bg-agri-700 text-agri-100 font-medium text-xs sm:text-sm px-3 py-2 rounded-lg border border-agri-600 transition-all flex items-center gap-1.5">
+                    <i class="fa-solid fa-file-csv text-amber-400"></i>
+                    <span data-i18n="btnExportCSV" class="hidden sm:inline">Export CSV</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full space-y-6">
+
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Total Earnings Card -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between hover:border-agri-300 transition-all">
+                <div>
+                    <p data-i18n="kpiTotalRevenue" class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Total Sales Revenue</p>
+                    <h3 class="text-2xl font-bold text-slate-900 font-heading" id="kpiTotalEarnings">₹0</h3>
+                    <p class="text-xs text-agri-700 mt-1 flex items-center gap-1 font-medium">
+                        <span data-i18n="kpiReceivedLabel">Received:</span> <span id="kpiReceivedAmount" class="font-bold">₹0</span>
+                    </p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-agri-50 text-agri-700 flex items-center justify-center text-xl shadow-xs">
+                    <i class="fa-solid fa-indian-rupee-sign"></i>
+                </div>
+            </div>
+
+            <!-- Total Quantity Sold Card -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between hover:border-agri-300 transition-all">
+                <div>
+                    <p data-i18n="kpiTotalQuantity" class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Total Quantity Sold</p>
+                    <h3 class="text-2xl font-bold text-slate-900 font-heading" id="kpiTotalQuantity">0 Quintals</h3>
+                    <p data-i18n="kpiAcrossAllProduce" class="text-xs text-slate-500 mt-1">Across all grain & produce</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl shadow-xs">
+                    <i class="fa-solid fa-weight-hanging"></i>
+                </div>
+            </div>
+
+            <!-- Total Orders Count -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between hover:border-agri-300 transition-all">
+                <div>
+                    <p data-i18n="kpiOrdersCount" class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Procurement Orders</p>
+                    <h3 class="text-2xl font-bold text-slate-900 font-heading" id="kpiTotalOrders">0</h3>
+                    <p data-i18n="kpiCompletedTransactions" class="text-xs text-slate-500 mt-1">Completed transactions</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl shadow-xs">
+                    <i class="fa-solid fa-file-invoice"></i>
+                </div>
+            </div>
+
+            <!-- Pending Payments Card -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex items-center justify-between hover:border-agri-300 transition-all">
+                <div>
+                    <p data-i18n="kpiPendingBalance" class="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Pending Balance</p>
+                    <h3 class="text-2xl font-bold text-red-600 font-heading" id="kpiPendingAmount">₹0</h3>
+                    <p class="text-xs text-amber-700 mt-1 font-medium" id="kpiPendingCount">0 Orders Pending/Partial</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-xl shadow-xs">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm space-y-4">
+            <div class="flex flex-col md:flex-row gap-3 justify-between items-stretch md:items-center">
+                
+                <!-- Search Box -->
+                <div class="relative flex-grow max-w-md">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="searchInput" oninput="applyFilters()" placeholder="Search Crop, Buyer / Mandi, Order ID..." data-i18n-ph="searchPlaceholder"
+                        class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-agri-500 focus:bg-white transition-all">
+                </div>
+
+                <!-- Filters Group -->
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <!-- Crop Type Filter -->
+                    <select id="cropFilter" onchange="applyFilters()" class="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-agri-500">
+                        <option value="ALL" data-i18n="filterAllCrops">All Crops</option>
+                        <option value="Wheat" data-i18n="cropWheat">Wheat</option>
+                        <option value="Rice / Paddy" data-i18n="cropRice">Rice / Paddy</option>
+                        <option value="Cotton" data-i18n="cropCotton">Cotton</option>
+                        <option value="Sugarcane" data-i18n="cropSugarcane">Sugarcane</option>
+                        <option value="Mustard" data-i18n="cropMustard">Mustard</option>
+                        <option value="Pulses / Dal" data-i18n="cropPulses">Pulses</option>
+                        <option value="Maize" data-i18n="cropMaize">Maize</option>
+                    </select>
+
+                    <!-- Payment Status Filter -->
+                    <select id="statusFilter" onchange="applyFilters()" class="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-agri-500">
+                        <option value="ALL" data-i18n="filterAllStatus">All Payment Statuses</option>
+                        <option value="Paid" data-i18n="statusPaid">Paid Fully</option>
+                        <option value="Partial" data-i18n="statusPartial">Partial Payment</option>
+                        <option value="Pending" data-i18n="statusPending">Pending</option>
+                    </select>
+
+                    <!-- Quick Date Range Preset -->
+                    <select id="datePreset" onchange="handleDatePreset(this.value)" class="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-agri-500">
+                        <option value="ALL" data-i18n="dateAllTime">All Time</option>
+                        <option value="THIS_MONTH" data-i18n="dateThisMonth">This Month</option>
+                        <option value="LAST_30" data-i18n="dateLast30">Last 30 Days</option>
+                        <option value="THIS_YEAR" data-i18n="dateThisYear">This Year</option>
+                    </select>
+
+                    <button onclick="resetFilters()" data-i18n="btnResetFilters" class="text-xs text-slate-500 hover:text-agri-700 px-2 py-1 font-medium underline transition-all">
+                        Reset Filters
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <div class="flex items-center gap-2">
+                    <h2 data-i18n="tableHeaderTitle" class="font-heading font-semibold text-slate-800 text-lg">Crop Sales Procurement Records</h2>
+                    <span id="recordsCounter" class="bg-agri-100 text-agri-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">0 Entries</span>
+                </div>
+                <p data-i18n="receiptNotice" class="text-xs text-slate-400 hidden sm:block">Click receipt button to view or download official invoice</p>
+            </div>
+
+            <!-- Table Container -->
+            <div class="overflow-x-auto min-h-[350px]">
+                <table class="w-full text-left text-sm border-collapse">
+                    <thead class="bg-slate-100/80 text-slate-600 font-semibold text-xs uppercase tracking-wider border-b border-slate-200">
+                        <tr>
+                            <th data-i18n="colOrderIdDate" class="py-3.5 px-4">Order ID & Date</th>
+                            <th data-i18n="colCropName" class="py-3.5 px-4">Crop Name</th>
+                            <th data-i18n="colBuyerMandi" class="py-3.5 px-4">Buyer / APMC Mandi</th>
+                            <th data-i18n="colQuantityRate" class="py-3.5 px-4 text-right">Quantity & Rate</th>
+                            <th data-i18n="colTotalSale" class="py-3.5 px-4 text-right">Total Sale</th>
+                            <th data-i18n="colPaymentReceived" class="py-3.5 px-4 text-right">Payment Received</th>
+                            <th data-i18n="colStatusMode" class="py-3.5 px-4 text-center">Status & Mode</th>
+                            <th data-i18n="colAction" class="py-3.5 px-4 text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordersTableBody" class="divide-y divide-slate-100 text-slate-700">
+                        <!-- Dynamic rows will be inserted here -->
+                    </tbody>
+                </table>
+
+                <!-- Empty State -->
+                <div id="emptyState" class="hidden flex-col items-center justify-center py-12 text-center">
+                    <div class="w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center text-2xl mb-3">
+                        <i class="fa-solid fa-folder-open"></i>
+                    </div>
+                    <h4 data-i18n="emptyStateTitle" class="text-slate-700 font-semibold font-heading text-base">No procurement orders found</h4>
+                    <p data-i18n="emptyStateSub" class="text-slate-400 text-xs mt-1">Try adjusting your filters or search query.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-slate-900 text-slate-400 text-xs py-6 mt-12 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 text-center space-y-2">
+            <p class="flex items-center justify-center gap-2 text-slate-300">
+                <i class="fa-solid fa-leaf text-agri-500"></i>
+                <span class="font-semibold font-heading">KisanKosh Digital Krishi Ledger</span> &mdash; <span data-i18n="footerTagline">Empowering Farmers with Transparent Procurement Data</span>
+            </p>
+            <p data-i18n="footerSub" class="text-slate-500">Designed for Agricultural Produce Markets, APMC Mandis, and Direct Buyer Transactions.</p>
+        </div>
+    </footer>
+
+    <div id="newOrderModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-xl w-full p-6 relative animate-fade-in my-8">
+            <button onclick="closeNewOrderModal()" class="absolute right-4 top-4 text-slate-400 hover:text-slate-600 p-1">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+
+            <div class="flex items-center gap-3 mb-5 border-b border-slate-100 pb-3">
+                <div class="w-10 h-10 rounded-xl bg-agri-100 text-agri-800 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-cart-flatbed font-bold"></i>
+                </div>
+                <div>
+                    <h3 data-i18n="modalTitle" class="font-heading font-bold text-slate-900 text-lg">Record Crop Procurement Sale</h3>
+                    <p data-i18n="modalSub" class="text-xs text-slate-500">Enter new produce sale details and payment receipt status</p>
+                </div>
+            </div>
+
+            <form id="orderForm" onsubmit="handleSaveOrder(event)" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label data-i18n="lblDateSale" class="block text-xs font-semibold text-slate-700 mb-1">Date of Sale *</label>
+                        <input type="date" id="formSaleDate" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-agri-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label data-i18n="lblCropSold" class="block text-xs font-semibold text-slate-700 mb-1">Crop Sold *</label>
+                        <select id="formCropName" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-agri-500 focus:outline-none">
+                            <option value="" data-i18n="optSelectCrop">Select Crop...</option>
+                            <option value="Wheat" data-i18n="cropWheat">Wheat</option>
+                            <option value="Rice / Paddy" data-i18n="cropRice">Rice / Paddy</option>
+                            <option value="Cotton" data-i18n="cropCotton">Cotton</option>
+                            <option value="Sugarcane" data-i18n="cropSugarcane">Sugarcane</option>
+                            <option value="Mustard" data-i18n="cropMustard">Mustard</option>
+                            <option value="Pulses / Dal" data-i18n="cropPulses">Pulses</option>
+                            <option value="Maize" data-i18n="cropMaize">Maize</option>
+                            <option value="Soybean" data-i18n="cropSoybean">Soybean</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label data-i18n="lblQuantity" class="block text-xs font-semibold text-slate-700 mb-1">Quantity *</label>
+                        <input type="number" step="0.1" id="formQuantity" oninput="calculateTotal()" placeholder="e.g. 50" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-agri-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label data-i18n="lblUnit" class="block text-xs font-semibold text-slate-700 mb-1">Unit</label>
+                        <select id="formUnit" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-agri-500 focus:outline-none">
+                            <option value="Quintal" data-i18n="unitQuintal">Quintals</option>
+                            <option value="Kg" data-i18n="unitKg">Kg</option>
+                            <option value="Ton" data-i18n="unitTon">Tons</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label data-i18n="lblRatePerUnit" class="block text-xs font-semibold text-slate-700 mb-1">Rate / Unit (₹) *</label>
+                        <input type="number" step="1" id="formUnitPrice" oninput="calculateTotal()" placeholder="e.g. 2275" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-agri-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label data-i18n="lblTotalAmount" class="block text-xs font-semibold text-slate-700 mb-1">Total Amount (₹)</label>
+                        <input type="number" id="formTotalAmount" readonly class="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800">
+                    </div>
+                    <div>
+                        <label data-i18n="lblBuyerMandi" class="block text-xs font-semibold text-slate-700 mb-1">Buyer / APMC Mandi *</label>
+                        <input type="text" id="formBuyerName" placeholder="e.g. Punjab APMC Mandi #4" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-agri-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-100 pt-3 mt-2">
+                    <h4 data-i18n="sectionPaymentDetails" class="text-xs font-bold uppercase tracking-wider text-agri-800 mb-3">Payment Details</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label data-i18n="lblAmountReceived" class="block text-xs font-semibold text-slate-700 mb-1">Amount Received (₹)</label>
+                            <input type="number" step="1" id="formPaymentReceived" placeholder="0" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-agri-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label data-i18n="lblDateReceived" class="block text-xs font-semibold text-slate-700 mb-1">Date Received</label>
+                            <input type="date" id="formPaymentDate" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-agri-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label data-i18n="lblPaymentMode" class="block text-xs font-semibold text-slate-700 mb-1">Payment Mode</label>
+                            <select id="formPaymentMode" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-agri-500 focus:outline-none">
+                                <option value="Direct Bank Transfer (NEFT/RTGS)" data-i18n="modeBank">Bank Transfer (NEFT/RTGS)</option>
+                                <option value="UPI / GPay" data-i18n="modeUPI">UPI / GPay</option>
+                                <option value="Cheque" data-i18n="modeCheque">Cheque</option>
+                                <option value="Cash" data-i18n="modeCash">Cash</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeNewOrderModal()" data-i18n="btnCancel" class="px-4 py-2 rounded-xl text-sm text-slate-600 hover:bg-slate-100 transition-all">Cancel</button>
+                    <button type="submit" data-i18n="btnSaveEntry" class="px-5 py-2 bg-agri-700 hover:bg-agri-800 text-white font-semibold rounded-xl text-sm shadow-md transition-all">Save Order Entry</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="receiptModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-xs z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 relative my-6">
+            
+            <!-- Action Bar in Modal Header -->
+            <div class="flex justify-between items-center border-b border-slate-100 pb-4 mb-4 no-print">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-receipt text-agri-700"></i>
+                    <h3 data-i18n="rcptModalHeader" class="font-heading font-bold text-slate-800 text-lg">Crop Procurement Payment Receipt</h3>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="printReceipt()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-3.5 py-2 rounded-lg font-medium transition-all flex items-center gap-1.5">
+                        <i class="fa-solid fa-print"></i> <span data-i18n="btnPrint">Print</span>
+                    </button>
+                    <button onclick="downloadPDFReceipt()" class="bg-agri-700 hover:bg-agri-800 text-white text-xs px-3.5 py-2 rounded-lg font-medium transition-all flex items-center gap-1.5 shadow-xs">
+                        <i class="fa-solid fa-file-pdf"></i> <span data-i18n="btnDownloadPDF">Download PDF</span>
+                    </button>
+                    <button onclick="closeReceiptModal()" class="text-slate-400 hover:text-slate-600 p-1.5 ml-2">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Receipt Content Area for Printing & PDF -->
+            <div id="printableReceipt" class="bg-white p-6 rounded-xl border border-slate-200 text-slate-800 relative space-y-6">
+                <!-- Watermark Badge -->
+                <div id="receiptWatermark" class="absolute right-6 top-6 uppercase font-bold text-3xl opacity-15 rotate-[-12deg] pointer-events-none select-none tracking-widest border-4 border-current px-4 py-1 rounded-lg">
+                    PAID
+                </div>
+
+                <!-- Receipt Header -->
+                <div class="flex justify-between items-start border-b border-slate-200 pb-5">
+                    <div>
+                        <div class="flex items-center gap-2 text-agri-800 font-bold text-xl font-heading">
+                            <i class="fa-solid fa-wheat-awn"></i>
+                            <span data-i18n="rcptHeaderTitle">KISANKOSH CROP PROCUREMENT</span>
+                        </div>
+                        <p data-i18n="rcptHeaderSub" class="text-xs text-slate-500 mt-1">Official Payment Receipt & Grain Sale Invoice</p>
+                        <p data-i18n="rcptApmcNotice" class="text-xs text-slate-500">Government Registered APMC Mandi Partner</p>
+                    </div>
+                    <div class="text-right">
+                        <p data-i18n="rcptNoLabel" class="text-xs font-semibold text-slate-500">RECEIPT NO.</p>
+                        <p class="text-base font-bold text-slate-900 font-mono" id="rcptOrderNo">ORD-0000</p>
+                        <p class="text-xs text-slate-500 mt-1"><span data-i18n="rcptDateLabel">Date:</span> <span id="rcptSaleDate" class="font-medium text-slate-800">--</span></p>
+                    </div>
+                </div>
+
+                <!-- Farmer & Buyer Grid -->
+                <div class="grid grid-cols-2 gap-6 bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs">
+                    <div>
+                        <p data-i18n="rcptFarmerDetails" class="text-slate-400 font-bold uppercase tracking-wider mb-1">Farmer Details (Seller)</p>
+                        <p class="font-bold text-sm text-slate-900">Ramesh Kumar Singh</p>
+                        <p class="text-slate-600"><span data-i18n="rcptFarmerId">Farmer ID:</span> KSN-882390</p>
+                        <p class="text-slate-600" data-i18n="rcptFarmerLocation">Vill: Rampur, Dist: Karnal, Haryana</p>
+                        <p class="text-slate-600"><span data-i18n="rcptMobile">Mobile:</span> +91 98123 *****</p>
+                    </div>
+                    <div>
+                        <p data-i18n="rcptBuyerDetails" class="text-slate-400 font-bold uppercase tracking-wider mb-1">Procurement Agency / Buyer</p>
+                        <p class="font-bold text-sm text-slate-900" id="rcptBuyerName">--</p>
+                        <p class="text-slate-600"><span data-i18n="rcptApmcLicense">APMC License No:</span> APMC/HR/2024/992</p>
+                        <p class="text-slate-600" data-i18n="rcptYardNo">Grain Market Yard Yard #2</p>
+                    </div>
+                </div>
+
+                <!-- Itemized Crop Table -->
+                <div class="overflow-hidden border border-slate-200 rounded-xl">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-100 font-bold text-slate-700 uppercase border-b border-slate-200">
+                            <tr>
+                                <th data-i18n="colCropDesc" class="p-3">Crop Description</th>
+                                <th data-i18n="colQuantity" class="p-3 text-right">Quantity</th>
+                                <th data-i18n="colRateUnit" class="p-3 text-right">Rate / Unit</th>
+                                <th data-i18n="colTotalAmount" class="p-3 text-right">Total Sale Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr>
+                                <td class="p-3 font-semibold text-slate-900" id="rcptCropName">--</td>
+                                <td class="p-3 text-right" id="rcptQuantity">--</td>
+                                <td class="p-3 text-right" id="rcptUnitPrice">--</td>
+                                <td class="p-3 text-right font-bold text-slate-900" id="rcptTotalAmount">--</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Payment Breakdown & Summary -->
+                <div class="grid grid-cols-2 gap-4 items-start pt-2">
+                    <div class="space-y-2 text-xs bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+                        <p data-i18n="rcptPaymentConfirmation" class="font-bold text-slate-800 border-b border-slate-200 pb-1">Payment Confirmation</p>
+                        <div class="flex justify-between">
+                            <span data-i18n="rcptStatusLabel" class="text-slate-500">Payment Status:</span>
+                            <span id="rcptStatusBadge" class="font-bold text-agri-700">PAID</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span data-i18n="rcptModeLabel" class="text-slate-500">Payment Mode:</span>
+                            <span id="rcptPaymentMode" class="font-medium text-slate-800">--</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span data-i18n="rcptDateRecdLabel" class="text-slate-500">Date Received:</span>
+                            <span id="rcptPaymentDate" class="font-medium text-slate-800">--</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-1.5 text-xs text-right">
+                        <div class="flex justify-between text-slate-600">
+                            <span data-i18n="rcptSubtotal">Subtotal:</span>
+                            <span id="rcptSubtotal">₹0</span>
+                        </div>
+                        <div class="flex justify-between text-slate-600">
+                            <span data-i18n="rcptTaxWaiver">Mandi Tax & Charges (0% Waiver):</span>
+                            <span>₹0</span>
+                        </div>
+                        <div class="flex justify-between text-sm font-bold text-slate-900 pt-2 border-t border-slate-200">
+                            <span data-i18n="rcptNetTotal">Net Total Amount:</span>
+                            <span id="rcptGrandTotal">₹0</span>
+                        </div>
+                        <div class="flex justify-between text-xs font-semibold text-agri-700 bg-agri-50 p-2 rounded-lg mt-2">
+                            <span data-i18n="rcptAmountPaidLabel">Amount Received:</span>
+                            <span id="rcptAmountPaid">₹0</span>
+                        </div>
+                        <div class="flex justify-between text-xs font-semibold text-red-600 bg-red-50 p-2 rounded-lg" id="rcptBalanceRow">
+                            <span data-i18n="rcptBalanceLabel">Balance Remaining:</span>
+                            <span id="rcptBalance">₹0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Signatures & Stamp -->
+                <div class="pt-8 border-t border-slate-200 flex justify-between items-end text-xs text-slate-500">
+                    <div>
+                        <div class="w-24 h-12 border-b border-dashed border-slate-300 flex items-center justify-center text-slate-300 font-mono text-[10px]">
+                            [DIGITAL STAMP]
+                        </div>
+                        <p data-i18n="rcptOfficerSignature" class="mt-1 font-medium text-slate-700">Procurement Officer Signature</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="w-32 h-10 border-b border-dashed border-slate-300"></div>
+                        <p data-i18n="rcptFarmerSignature" class="mt-1 font-medium text-slate-700">Farmer's Signature / Thumb Impression</p>
+                    </div>
+                </div>
+
+                <div data-i18n="rcptDisclaimer" class="text-center text-[10px] text-slate-400 pt-2 border-t border-slate-100">
+                    This is a computer-generated crop sale receipt verified under agricultural procurement standards.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Multi-Language Translation Dictionaries for English, Hindi, Tamil, Punjabi, Telugu, Assamese, Kannada
+        const translations = {
+            en: {
+                appBadge: "Procurement Ledger",
+                appSubheading: "Krishi Mandi Crop Sales & Payment Database",
+                btnRecordSale: "Record New Sale",
+                btnExportCSV: "Export CSV",
+                kpiTotalRevenue: "Total Sales Revenue",
+                kpiReceivedLabel: "Received:",
+                kpiTotalQuantity: "Total Quantity Sold",
+                kpiAcrossAllProduce: "Across all grain & produce",
+                kpiOrdersCount: "Procurement Orders",
+                kpiCompletedTransactions: "Completed transactions",
+                kpiPendingBalance: "Pending Balance",
+                kpiPendingSuffix: "Order(s) Pending/Partial",
+                searchPlaceholder: "Search Crop, Buyer / Mandi, Order ID...",
+                filterAllCrops: "All Crops",
+                filterAllStatus: "All Payment Statuses",
+                statusPaid: "Paid Fully",
+                statusPartial: "Partial Payment",
+                statusPending: "Pending",
+                dateAllTime: "All Time",
+                dateThisMonth: "This Month",
+                dateLast30: "Last 30 Days",
+                dateThisYear: "This Year",
+                btnResetFilters: "Reset Filters",
+                tableHeaderTitle: "Crop Sales Procurement Records",
+                receiptNotice: "Click receipt button to view or download official invoice",
+                colOrderIdDate: "Order ID & Date",
+                colCropName: "Crop Name",
+                colBuyerMandi: "Buyer / APMC Mandi",
+                colQuantityRate: "Quantity & Rate",
+                colTotalSale: "Total Sale",
+                colPaymentReceived: "Payment Received",
+                colStatusMode: "Status & Mode",
+                colAction: "Action",
+                emptyStateTitle: "No procurement orders found",
+                emptyStateSub: "Try adjusting your filters or search query.",
+                footerTagline: "Empowering Farmers with Transparent Procurement Data",
+                footerSub: "Designed for Agricultural Produce Markets, APMC Mandis, and Direct Buyer Transactions.",
+                modalTitle: "Record Crop Procurement Sale",
+                modalSub: "Enter new produce sale details and payment receipt status",
+                lblDateSale: "Date of Sale *",
+                lblCropSold: "Crop Sold *",
+                optSelectCrop: "Select Crop...",
+                lblQuantity: "Quantity *",
+                lblUnit: "Unit",
+                lblRatePerUnit: "Rate / Unit (₹) *",
+                lblTotalAmount: "Total Amount (₹)",
+                lblBuyerMandi: "Buyer / APMC Mandi *",
+                sectionPaymentDetails: "Payment Details",
+                lblAmountReceived: "Amount Received (₹)",
+                lblDateReceived: "Date Received",
+                lblPaymentMode: "Payment Mode",
+                btnCancel: "Cancel",
+                btnSaveEntry: "Save Order Entry",
+                rcptModalHeader: "Crop Procurement Payment Receipt",
+                btnPrint: "Print",
+                btnDownloadPDF: "Download PDF",
+                rcptHeaderTitle: "KISANKOSH CROP PROCUREMENT",
+                rcptHeaderSub: "Official Payment Receipt & Grain Sale Invoice",
+                rcptApmcNotice: "Government Registered APMC Mandi Partner",
+                rcptNoLabel: "RECEIPT NO.",
+                rcptDateLabel: "Date:",
+                rcptFarmerDetails: "Farmer Details (Seller)",
+                rcptFarmerId: "Farmer ID:",
+                rcptFarmerLocation: "Vill: Rampur, Dist: Karnal, Haryana",
+                rcptMobile: "Mobile:",
+                rcptBuyerDetails: "Procurement Agency / Buyer",
+                rcptApmcLicense: "APMC License No:",
+                rcptYardNo: "Grain Market Yard Yard #2",
+                colCropDesc: "Crop Description",
+                colQuantity: "Quantity",
+                colRateUnit: "Rate / Unit",
+                colTotalAmount: "Total Sale Amount",
+                rcptPaymentConfirmation: "Payment Confirmation",
+                rcptStatusLabel: "Payment Status:",
+                rcptModeLabel: "Payment Mode:",
+                rcptDateRecdLabel: "Date Received:",
+                rcptSubtotal: "Subtotal:",
+                rcptTaxWaiver: "Mandi Tax & Charges (0% Waiver):",
+                rcptNetTotal: "Net Total Amount:",
+                rcptAmountPaidLabel: "Amount Received:",
+                rcptBalanceLabel: "Balance Remaining:",
+                rcptOfficerSignature: "Procurement Officer Signature",
+                rcptFarmerSignature: "Farmer's Signature / Thumb Impression",
+                rcptDisclaimer: "This is a computer-generated crop sale receipt verified under agricultural procurement standards.",
+                btnReceipt: "Receipt",
+                notReceived: "Not received",
+                unitQuintal: "Quintals",
+                unitKg: "Kg",
+                unitTon: "Tons",
+                cropWheat: "Wheat (गेहूं)",
+                cropRice: "Rice / Paddy (चावल)",
+                cropCotton: "Cotton (कपास)",
+                cropSugarcane: "Sugarcane (गन्ना)",
+                cropMustard: "Mustard (सरसों)",
+                cropPulses: "Pulses (दालें)",
+                cropMaize: "Maize (मक्का)",
+                cropSoybean: "Soybean (सोयाबीन)",
+                modeBank: "Bank Transfer (NEFT/RTGS)",
+                modeUPI: "UPI / GPay",
+                modeCheque: "Cheque",
+                modeCash: "Cash"
+            },
+            hi: {
+                appBadge: "खरीद बहीखाता",
+                appSubheading: "कृषि मंडी फसल बिक्री एवं भुगतान डेटाबेस",
+                btnRecordSale: "नई बिक्री दर्ज करें",
+                btnExportCSV: "CSV डाउनलोड करें",
+                kpiTotalRevenue: "कुल बिक्री राजस्व",
+                kpiReceivedLabel: "प्राप्त राशि:",
+                kpiTotalQuantity: "कुल बेची गई मात्रा",
+                kpiAcrossAllProduce: "सभी खाद्यान्न एवं उपज पर",
+                kpiOrdersCount: "खरीद आदेश",
+                kpiCompletedTransactions: "पूर्ण लेन-देन",
+                kpiPendingBalance: "बकाया राशि",
+                kpiPendingSuffix: "आदेश लंबित/आंशिक",
+                searchPlaceholder: "फसल, खरीदार / मंडी, ऑर्डर आईडी खोजें...",
+                filterAllCrops: "सभी फसलें",
+                filterAllStatus: "सभी भुगतान स्थितियां",
+                statusPaid: "पूर्ण भुगतान",
+                statusPartial: "आंशिक भुगतान",
+                statusPending: "बकाया",
+                dateAllTime: "कुल समय",
+                dateThisMonth: "इस महीने",
+                dateLast30: "पिछले 30 दिन",
+                dateThisYear: "इस वर्ष",
+                btnResetFilters: "फ़िल्टर रीसेट करें",
+                tableHeaderTitle: "फसल बिक्री खरीद का रिकॉर्ड",
+                receiptNotice: "आधिकारिक रसीद देखने या डाउनलोड करने के लिए बटन पर क्लिक करें",
+                colOrderIdDate: "ऑर्डर आईडी एवं दिनांक",
+                colCropName: "फसल का नाम",
+                colBuyerMandi: "खरीदार / एपीएमसी मंडी",
+                colQuantityRate: "मात्रा एवं दर",
+                colTotalSale: "कुल बिक्री",
+                colPaymentReceived: "प्राप्त भुगतान",
+                colStatusMode: "स्थिति एवं माध्यम",
+                colAction: "कार्रवाई",
+                emptyStateTitle: "कोई खरीद आदेश नहीं मिला",
+                emptyStateSub: "कृपया अपने फ़िल्टर या खोज शब्द बदलकर प्रयास करें।",
+                footerTagline: "पारदर्शी खरीद डेटा के साथ किसानों को सशक्त बनाना",
+                footerSub: "कृषि उपज मंडी, एपीएमसी मंडी और सीधे खरीदार लेनदेन के लिए निर्मित।",
+                modalTitle: "फसल खरीद बिक्री दर्ज करें",
+                modalSub: "नई उपज बिक्री विवरण और भुगतान रसीद की स्थिति दर्ज करें",
+                lblDateSale: "बिक्री की तिथि *",
+                lblCropSold: "बेची गई फसल *",
+                optSelectCrop: "फसल चुनें...",
+                lblQuantity: "मात्रा *",
+                lblUnit: "इकाई",
+                lblRatePerUnit: "दर / इकाई (₹) *",
+                lblTotalAmount: "कुल राशि (₹)",
+                lblBuyerMandi: "खरीदार / एपीएमसी मंडी *",
+                sectionPaymentDetails: "भुगतान का विवरण",
+                lblAmountReceived: "प्राप्त राशि (₹)",
+                lblDateReceived: "प्राप्ति की तिथि",
+                lblPaymentMode: "भुगतान का माध्यम",
+                btnCancel: "रद्द करें",
+                btnSaveEntry: "ऑर्डर सहेजें",
+                rcptModalHeader: "फसल खरीद भुगतान रसीद",
+                btnPrint: "प्रिंट करें",
+                btnDownloadPDF: "पीडीएफ डाउनलोड करें",
+                rcptHeaderTitle: "किसानकोश फसल खरीद",
+                rcptHeaderSub: "आधिकारिक भुगतान रसीद एवं अनाज बिक्री बीजक",
+                rcptApmcNotice: "सरकारी पंजीकृत एपीएमसी मंडी भागीदार",
+                rcptNoLabel: "रसीद संख्या:",
+                rcptDateLabel: "दिनांक:",
+                rcptFarmerDetails: "किसान विवरण (विक्रेता)",
+                rcptFarmerId: "किसान आईडी:",
+                rcptFarmerLocation: "ग्राम: रामपुर, जिला: करनाल, हरियाणा",
+                rcptMobile: "मोबाइल:",
+                rcptBuyerDetails: "खरीद एजेंसी / क्रेता",
+                rcptApmcLicense: "एपीएमसी लाइसेंस संख्या:",
+                rcptYardNo: "अनाज मंडी यार्ड #2",
+                colCropDesc: "फसल विवरण",
+                colQuantity: "मात्रा",
+                colRateUnit: "दर / इकाई",
+                colTotalAmount: "कुल बिक्री राशि",
+                rcptPaymentConfirmation: "भुगतान की पुष्टि",
+                rcptStatusLabel: "भुगतान स्थिति:",
+                rcptModeLabel: "भुगतान माध्यम:",
+                rcptDateRecdLabel: "प्राप्ति तिथि:",
+                rcptSubtotal: "उप-योग:",
+                rcptTaxWaiver: "मंडी कर (0% छूट):",
+                rcptNetTotal: "कुल शुद्ध राशि:",
+                rcptAmountPaidLabel: "प्राप्त राशि:",
+                rcptBalanceLabel: "शेष बकाया:",
+                rcptOfficerSignature: "खरीद अधिकारी के हस्ताक्षर",
+                rcptFarmerSignature: "किसान के हस्ताक्षर / अंगूठे का निशान",
+                rcptDisclaimer: "यह कृषि खरीद मानकों के तहत सत्यापित एक कंप्यूटर जनित रसीद है।",
+                btnReceipt: "रसीद",
+                notReceived: "प्राप्त नहीं हुआ",
+                unitQuintal: "क्विंटल",
+                unitKg: "किग्रा",
+                unitTon: "टन",
+                cropWheat: "गेहूं",
+                cropRice: "चावल / धान",
+                cropCotton: "कपास",
+                cropSugarcane: "गन्ना",
+                cropMustard: "सरसों",
+                cropPulses: "दालें",
+                cropMaize: "मक्का",
+                cropSoybean: "सोयाबीन",
+                modeBank: "बैंक ट्रांसफर (NEFT/RTGS)",
+                modeUPI: "यूपीआई / गूगल पे",
+                modeCheque: "चेक",
+                modeCash: "नकद"
+            },
+            ta: {
+                appBadge: "கொள்முதல் பேரேடு",
+                appSubheading: "வேளாண் மண்டி பயிர் விற்பனை மற்றும் கட்டண தரவுத்தளம்",
+                btnRecordSale: "புதிய விற்பனையைப் பதிவுசெய்",
+                btnExportCSV: "CSV பதிவிறக்கம்",
+                kpiTotalRevenue: "மொத்த விற்பனை வருவாய்",
+                kpiReceivedLabel: "பெறப்பட்டது:",
+                kpiTotalQuantity: "விற்கப்பட்ட மொத்த அளவு",
+                kpiAcrossAllProduce: "அனைத்து தானியங்கள் மற்றும் விளைபொருட்கள்",
+                kpiOrdersCount: "கொள்முதல் ஆர்டர்கள்",
+                kpiCompletedTransactions: "நிறைவடைந்த பரிவர்த்தனைகள்",
+                kpiPendingBalance: "நிலுவைத்தொகை",
+                kpiPendingSuffix: "ஆர்டர்கள் நிலுவை/பகுதி",
+                searchPlaceholder: "பயிர், வாங்குபவர் / மண்டி, ஆர்டர் ஐடியைத் தேடுங்கள்...",
+                filterAllCrops: "அனைத்து பயிர்களும்",
+                filterAllStatus: "அனைத்து கட்டண நிலைகளும்",
+                statusPaid: "முழுமையாக செலுத்தப்பட்டது",
+                statusPartial: "பகுதி கட்டணம்",
+                statusPending: "நிலுவையில் உள்ளது",
+                dateAllTime: "அனைத்து நேரமும்",
+                dateThisMonth: "இந்த மாதம்",
+                dateLast30: "கடந்த 30 நாட்கள்",
+                dateThisYear: "இந்த ஆண்டு",
+                btnResetFilters: "வடிகட்டிகளை மீட்டமை",
+                tableHeaderTitle: "பயிர் விற்பனை கொள்முதல் பதிவுகள்",
+                receiptNotice: "அதிகாரப்பூர்வ ரசீதை காண அல்லது பதிவிறக்க பொத்தானை அழுத்தவும்",
+                colOrderIdDate: "ஆர்டர் ஐடி & தேதி",
+                colCropName: "பயிர் பெயர்",
+                colBuyerMandi: "வாங்குபவர் / APMC மண்டி",
+                colQuantityRate: "அளவு & விலை",
+                colTotalSale: "மொத்த விற்பனை",
+                colPaymentReceived: "பெறப்பட்ட கட்டணம்",
+                colStatusMode: "நிலை & முறை",
+                colAction: "செயல்பாடு",
+                emptyStateTitle: "கொள்முதல் ஆர்டர்கள் எதுவும் இல்லை",
+                emptyStateSub: "உங்கள் வடிகட்டிகள் அல்லது தேடலை மாற்றி முயற்சிக்கவும்.",
+                footerTagline: "வெளிப்படையான கொள்முதல் தரவு மூலம் விவசாயிகளுக்கு அதிகாரம் அளித்தல்",
+                footerSub: "வேளாண் விளைபொருள் சந்தைகள் மற்றும் நேரடி வாங்குபவர் பரிவர்த்தனைகளுக்காக உருவாக்கப்பட்டது.",
+                modalTitle: "பயிர் விற்பனையைப் பதிவுசெய்க",
+                modalSub: "புதிய விளைபொருள் விற்பனை விவரங்கள் மற்றும் கட்டண ரசீது நிலையை உள்ளிடவும்",
+                lblDateSale: "விற்பனை தேதி *",
+                lblCropSold: "விற்கப்பட்ட பயிர் *",
+                optSelectCrop: "பயிரைத் தேர்ந்தெடுக்கவும்...",
+                lblQuantity: "அளவு *",
+                lblUnit: "அலகு",
+                lblRatePerUnit: "விலை / அலகு (₹) *",
+                lblTotalAmount: "மொத்த தொகை (₹)",
+                lblBuyerMandi: "வாங்குபவர் / APMC மண்டி *",
+                sectionPaymentDetails: "கட்டண விவரங்கள்",
+                lblAmountReceived: "பெறப்பட்ட தொகை (₹)",
+                lblDateReceived: "பெறப்பட்ட தேதி",
+                lblPaymentMode: "கட்டண முறை",
+                btnCancel: "ரத்து செய்",
+                btnSaveEntry: "பதிவை சேமி",
+                rcptModalHeader: "பயிர் கொள்முதல் கட்டண ரசீது",
+                btnPrint: "அச்சிடுக",
+                btnDownloadPDF: "PDF பதிவிறக்கவும்",
+                rcptHeaderTitle: "கிசான்கோஷ் பயிர் கொள்முதல்",
+                rcptHeaderSub: "அதிகாரப்பூர்வ கட்டண ரசீது & தானிய விற்பனை சலான்",
+                rcptApmcNotice: "அரசு பதிவுசெய்த APMC மண்டி பங்குதாரர்",
+                rcptNoLabel: "ரசீது எண்.",
+                rcptDateLabel: "தேதி:",
+                rcptFarmerDetails: "விவசாயி விவரங்கள் (விற்பனையாளர்)",
+                rcptFarmerId: "விவசாயி ஐடி:",
+                rcptFarmerLocation: "கிராமம்: ராம்பூர், கர்னால், ஹரியானா",
+                rcptMobile: "கைபேசி:",
+                rcptBuyerDetails: "கொள்முதல் முகமை / வாங்குபவர்",
+                rcptApmcLicense: "APMC உரிம எண்:",
+                rcptYardNo: "தானிய சந்தை வளாகம் #2",
+                colCropDesc: "பயிர் വിവരங்கள்",
+                colQuantity: "அளவு",
+                colRateUnit: "விலை / அலகு",
+                colTotalAmount: "மொத்த விற்பனை தொகை",
+                rcptPaymentConfirmation: "கட்டண உறுதிப்படுத்தல்",
+                rcptStatusLabel: "கட்டண நிலை:",
+                rcptModeLabel: "கட்டண முறை:",
+                rcptDateRecdLabel: "பெறப்பட்ட தேதி:",
+                rcptSubtotal: "உப மொத்தம்:",
+                rcptTaxWaiver: "மண்டி வரி (0% தள்ளுபடி):",
+                rcptNetTotal: "மொத்த நிகர தொகை:",
+                rcptAmountPaidLabel: "பெறப்பட்ட தொகை:",
+                rcptBalanceLabel: "மீதி நிலுவை:",
+                rcptOfficerSignature: "கொள்முதல் அதிகாரி கையொப்பம்",
+                rcptFarmerSignature: "விவசாயியின் கையொப்பம் / கைரேகை",
+                rcptDisclaimer: "இது வேளாண் கொள்முதல் தரநிலைகளின்படி சரிபார்க்கப்பட்ட கணினி உருவாக்கிய ரசீது ஆகும்.",
+                btnReceipt: "ரசீது",
+                notReceived: "பெறப்படவில்லை",
+                unitQuintal: "குவிண்டால்",
+                unitKg: "கிலோ",
+                unitTon: "டன்",
+                cropWheat: "கோதுமை",
+                cropRice: "அரிசி / நெல்",
+                cropCotton: "பருத்தி",
+                cropSugarcane: "கரும்பு",
+                cropMustard: "கடுகு",
+                cropPulses: "பருப்பு வகைகள்",
+                cropMaize: "சோளம்",
+                cropSoybean: "சோயாபீன்",
+                modeBank: "வங்கி பரிமாற்றம் (NEFT/RTGS)",
+                modeUPI: "UPI / GPay",
+                modeCheque: "காசோலை",
+                modeCash: "பணம்"
+            },
+            pa: {
+                appBadge: "ਖਰੀਦ ਲੇਖਾ",
+                appSubheading: "ਕ੍ਰਿਸ਼ੀ ਮੰਡੀ ਫਸਲ ਵਿਕਰੀ ਅਤੇ ਭੁਗਤਾਨ ਡਾਟਾਬੇਸ",
+                btnRecordSale: "ਨਵੀਂ ਵਿਕਰੀ ਦਰਜ ਕਰੋ",
+                btnExportCSV: "CSV ਡਾਊਨਲੋਡ ਕਰੋ",
+                kpiTotalRevenue: "ਕੁੱਲ ਵਿਕਰੀ ਆਮਦਨ",
+                kpiReceivedLabel: "ਪ੍ਰਾਪਤ ਹੋਇਆ:",
+                kpiTotalQuantity: "ਕੁੱਲ ਵੇਚੀ ਗਈ ਮਾਤਰਾ",
+                kpiAcrossAllProduce: "ਸਾਰੀਆਂ ਫਸਲਾਂ ਅਤੇ ਅਨਾਜ 'ਤੇ",
+                kpiOrdersCount: "ਖਰੀਦ ਆਰਡਰ",
+                kpiCompletedTransactions: "ਪੂਰੇ ਹੋਏ ਲੈਣ-ਦੇਣ",
+                kpiPendingBalance: "ਬਕਾਇਆ ਰਕਮ",
+                kpiPendingSuffix: "ਆਰਡਰ ਬਕਾਇਆ/ਅਧੂਰੇ",
+                searchPlaceholder: "ਫਸਲ, ਖਰੀਦਦਾਰ / ਮੰਡੀ, ਆਰਡਰ ਆਈਡੀ ਖੋਜੋ...",
+                filterAllCrops: "ਸਾਰੀਆਂ ਫਸਲਾਂ",
+                filterAllStatus: "ਸਾਰੀਆਂ ਭੁਗਤਾਨ ਸਥਿਤੀਆਂ",
+                statusPaid: "ਪੂਰਾ ਭੁਗਤਾਨ",
+                statusPartial: "ਅੰਸ਼ਕ ਭੁਗਤਾਨ",
+                statusPending: "ਬਕਾਇਆ",
+                dateAllTime: "ਕੁੱਲ ਸਮਾਂ",
+                dateThisMonth: "ਇਸ ਮਹੀਨੇ",
+                dateLast30: "ਪਿਛਲੇ 30 ਦਿਨ",
+                dateThisYear: "ਇਸ ਸਾਲ",
+                btnResetFilters: "ਫਿਲਟਰ ਰੀਸੈਟ ਕਰੋ",
+                tableHeaderTitle: "ਫਸਲ ਵਿਕਰੀ ਖਰੀਦ ਰਿਕਾਰਡ",
+                receiptNotice: "ਰਸੀਦ ਦੇਖਣ ਜਾਂ ਡਾਊਨਲੋਡ ਕਰਨ ਲਈ ਬਟਨ 'ਤੇ ਕਲਿੱਕ ਕਰੋ",
+                colOrderIdDate: "ਆਰਡਰ ਆਈਡੀ ਅਤੇ ਮਿਤੀ",
+                colCropName: "ਫਸਲ ਦਾ ਨਾਮ",
+                colBuyerMandi: "ਖਰੀਦਦਾਰ / ਏ.ਪੀ.ਐਮ.ਸੀ. ਮੰਡੀ",
+                colQuantityRate: "ਮਾਤਰਾ ਅਤੇ ਦਰ",
+                colTotalSale: "ਕੁੱਲ ਵਿਕਰੀ",
+                colPaymentReceived: "ਪ੍ਰਾਪਤ ਭੁਗਤਾਨ",
+                colStatusMode: "ਸਥਿਤੀ ਅਤੇ ਮਾਧਿਅਮ",
+                colAction: "ਕਾਰਵਾਈ",
+                emptyStateTitle: "ਕੋਈ ਖਰੀਦ ਆਰਡਰ ਨਹੀਂ ਮਿਲਿਆ",
+                emptyStateSub: "ਕਿਰਪਾ ਕਰਕੇ ਆਪਣੇ ਫਿਲਟਰ ਜਾਂ ਖੋਜ ਬਦਲ ਕੇ ਦੇਖੋ।",
+                footerTagline: "ਪਾਰਦਰਸ਼ੀ ਖਰੀਦ ਡੇਟਾ ਨਾਲ ਕਿਸਾਨਾਂ ਨੂੰ ਸ਼ਕਤੀਸ਼ਾਲੀ ਬਣਾਉਣਾ",
+                footerSub: "ਖੇਤੀਬਾੜੀ ਮੰਡੀਆਂ ਅਤੇ ਸਿੱਧੇ ਖਰੀਦਦਾਰਾਂ ਲਈ ਤਿਆਰ ਕੀਤਾ ਗਿਆ।",
+                modalTitle: "ਫਸਲ ਵਿਕਰੀ ਦਰਜ ਕਰੋ",
+                modalSub: "ਨਵੀਂ ਫਸਲ ਵਿਕਰੀ ਦਾ ਵੇਰਵਾ ਅਤੇ ਭੁਗਤਾਨ ਸਥਿਤੀ ਦਰਜ ਕਰੋ",
+                lblDateSale: "ਵਿਕਰੀ ਦੀ ਮਿਤੀ *",
+                lblCropSold: "ਵੇਚੀ ਗਈ ਫਸਲ *",
+                optSelectCrop: "ਫਸਲ ਚੁਣੋ...",
+                lblQuantity: "ਮਾਤਰਾ *",
+                lblUnit: "ਇਕਾਈ",
+                lblRatePerUnit: "ਦਰ / ਇਕਾਈ (₹) *",
+                lblTotalAmount: "ਕੁੱਲ ਰਕਮ (₹)",
+                lblBuyerMandi: "ਖਰੀਦਦਾਰ / ਮੰਡੀ *",
+                sectionPaymentDetails: "ਭੁਗਤਾਨ ਦਾ ਵੇਰਵਾ",
+                lblAmountReceived: "ਪ੍ਰਾਪਤ ਰਕਮ (₹)",
+                lblDateReceived: "ਪ੍ਰਾਪਤੀ ਦੀ ਮਿਤੀ",
+                lblPaymentMode: "ਭੁਗਤਾਨ ਦਾ ਤਰੀਕਾ",
+                btnCancel: "ਰੱਦ ਕਰੋ",
+                btnSaveEntry: "ਆਰਡਰ ਸੰਭਾਲੋ",
+                rcptModalHeader: "ਫਸਲ ਖਰੀਦ ਭੁਗਤਾਨ ਰਸੀਦ",
+                btnPrint: "ਪ੍ਰਿੰਟ ਕਰੋ",
+                btnDownloadPDF: "PDF ਡਾਊਨਲੋਡ ਕਰੋ",
+                rcptHeaderTitle: "ਕਿਸਾਨਕੋਸ਼ ਫਸਲ ਖਰੀਦ",
+                rcptHeaderSub: "ਅਧਿਕਾਰਤ ਭੁਗਤਾਨ ਰਸੀਦ ਅਤੇ ਅਨਾਜ ਵਿਕਰੀ ਬਿੱਲ",
+                rcptApmcNotice: "ਸਰਕਾਰ ਦੁਆਰਾ ਰਜਿਸਟਰਡ ਏ.ਪੀ.ਐਮ.ਸੀ. ਮੰਡੀ ਭਾਈਵਾਲ",
+                rcptNoLabel: "ਰਸੀਦ ਨੰਬਰ:",
+                rcptDateLabel: "ਮਿਤੀ:",
+                rcptFarmerDetails: "ਕਿਸਾਨ ਦਾ ਵੇਰਵਾ (ਵੇਚਣ ਵਾਲਾ)",
+                rcptFarmerId: "ਕਿਸਾਨ ਆਈਡੀ:",
+                rcptFarmerLocation: "ਪਿੰਡ: ਰਾਮਪੁਰ, ਜ਼ਿਲ੍ਹਾ: ਕਰਨਾਲ, ਹਰਿਆਣਾ",
+                rcptMobile: "ਮੋਬਾਈਲ:",
+                rcptBuyerDetails: "ਖਰੀਦ ਏਜੰਸੀ / ਖਰੀਦਦਾਰ",
+                rcptApmcLicense: "ਏ.ਪੀ.ਐਮ.ਸੀ. ਲਾਇਸੈਂਸ ਨੰਬਰ:",
+                rcptYardNo: "ਅਨਾਜ ਮੰਡੀ ਯਾਰਡ #2",
+                colCropDesc: "ਫਸਲ ਦਾ ਵੇਰਵਾ",
+                colQuantity: "ਮਾਤਰਾ",
+                colRateUnit: "ਦਰ / ਇਕਾਈ",
+                colTotalAmount: "ਕੁੱਲ ਵਿਕਰੀ ਰਕਮ",
+                rcptPaymentConfirmation: "ਭੁਗਤਾਨ ਦੀ ਪੁਸ਼ਟੀ",
+                rcptStatusLabel: "ਭੁਗਤਾਨ ਸਥਿਤੀ:",
+                rcptModeLabel: "ਭੁਗਤਾਨ ਮਾਧਿਅਮ:",
+                rcptDateRecdLabel: "ਪ੍ਰਾਪਤੀ ਮਿਤੀ:",
+                rcptSubtotal: "ਕੁੱਲ ਜੋੜ:",
+                rcptTaxWaiver: "ਮੰਡੀ ਟੈਕਸ (0% ਛੋਟ):",
+                rcptNetTotal: "ਕੁੱਲ ਸ਼ੁੱਧ ਰਕਮ:",
+                rcptAmountPaidLabel: "ਪ੍ਰਾਪਤ ਰਕਮ:",
+                rcptBalanceLabel: "ਬਾਕੀ ਰਕਮ:",
+                rcptOfficerSignature: "ਖਰੀਦ ਅਧਿਕਾਰੀ ਦੇ ਦਸਤਖਤ",
+                rcptFarmerSignature: "ਕਿਸਾਨ ਦੇ ਦਸਤਖਤ / ਅੰਗੂਠੇ ਦਾ ਨਿਸ਼ਾਨ",
+                rcptDisclaimer: "ਇਹ ਖੇਤੀਬਾੜੀ ਖਰੀਦ ਮਾਪਦੰਡਾਂ ਦੇ ਤਹਿਤ ਤਸਦੀਕ ਕੀਤੀ ਗਈ ਕੰਪਿਊਟਰ ਤਿਆਰ ਕੀਤੀ ਰਸੀਦ ਹੈ।",
+                btnReceipt: "ਰਸੀਦ",
+                notReceived: "ਪ੍ਰਾਪਤ ਨਹੀਂ ਹੋਇਆ",
+                unitQuintal: "ਕੁਇੰਟਲ",
+                unitKg: "ਕਿਲੋਗ੍ਰਾਮ",
+                unitTon: "ਟਨ",
+                cropWheat: "ਕਣਕ",
+                cropRice: "ਝੋਨਾ / ਚੌਲ",
+                cropCotton: "ਨਰਮਾ / ਕਪਾਹ",
+                cropSugarcane: "ਗੰਨਾ",
+                cropMustard: "ਸਰ੍ਹੋਂ",
+                cropPulses: "ਦਾਲਾਂ",
+                cropMaize: "ਮੱਕੀ",
+                cropSoybean: "ਸੋਇਆਬੀਨ",
+                modeBank: "ਬੈਂਕ ਟ੍ਰਾਂਸਫਰ (NEFT/RTGS)",
+                modeUPI: "ਯੂ.ਪੀ.ਆਈ. / ਜੀ.ਪੇ",
+                modeCheque: "ਚੈੱਕ",
+                modeCash: "ਨਕਦ"
+            },
+            te: {
+                appBadge: "సేకరణ ఖాతా",
+                appSubheading: "కృషి మండి పంట అమ్మకాలు & చెల్లింపుల డేటాబేస్",
+                btnRecordSale: "కొత్త అమ్మకాన్ని నమోదు చేయండి",
+                btnExportCSV: "CSV ని డౌన్‌లోడ్ చేయండి",
+                kpiTotalRevenue: "మొత్తం అమ్మకాల ఆదాయం",
+                kpiReceivedLabel: "అందుకున్నది:",
+                kpiTotalQuantity: "అమ్మిన మొత్తం పరిమాణం",
+                kpiAcrossAllProduce: "అన్ని ధాన్యాలు మరియు దిగుబడులు",
+                kpiOrdersCount: "సేకరణ ఆర్డర్లు",
+                kpiCompletedTransactions: "పూర్తయిన లావాదేవీలు",
+                kpiPendingBalance: "బకాయి మొత్తం",
+                kpiPendingSuffix: "ఆర్డర్లు పెండింగ్/పాక్షికం",
+                searchPlaceholder: "పంట, కొనుగోలుదారు / మండి, ఆర్డర్ ఐడీని శోధించండి...",
+                filterAllCrops: "అన్ని పంటలు",
+                filterAllStatus: "అన్ని చెల్లింపు స్థితులు",
+                statusPaid: "పూర్తిగా చెల్లించబడింది",
+                statusPartial: "పాక్షిక చెల్లింపు",
+                statusPending: "పెండింగ్‌లో ఉంది",
+                dateAllTime: "మొత్తం సమయం",
+                dateThisMonth: "ఈ నెల",
+                dateLast30: "గత 30 రోజులు",
+                dateThisYear: "ఈ సంవత్సరం",
+                btnResetFilters: "ఫిల్టర్లను రీసెట్ చేయండి",
+                tableHeaderTitle: "పంట అమ్మకాల సేకరణ రికార్డులు",
+                receiptNotice: "రసీదు చూడటానికి లేదా డౌన్‌లోడ్ చేయడానికి బటన్‌పై క్లిక్ చేయండి",
+                colOrderIdDate: "ఆర్డర్ ఐడీ & తేదీ",
+                colCropName: "పంట పేరు",
+                colBuyerMandi: "కొనుగోలుదారు / APMC మండి",
+                colQuantityRate: "పరిమాణం & ధర",
+                colTotalSale: "మొత్తం అమ్మకం",
+                colPaymentReceived: "అందుకున్న చెల్లింపు",
+                colStatusMode: "స్థితి & విధానం",
+                colAction: "చర్య",
+                emptyStateTitle: "సేకరణ ఆర్డర్లు ఏవీ కనుగొనబడలేదు",
+                emptyStateSub: "దయచేసి మీ ఫిల్టర్లు లేదా శోధనను మార్చి చూడండి.",
+                footerTagline: "పారదర్శక సేకరణ డేటాతో రైతులను సాధికారపరచడం",
+                footerSub: "వ్యవసాయ మార్కెట్లు మరియు నేరుగా కొనుగోలుదారుల కోసం రూపొందించబడింది.",
+                modalTitle: "పంట అమ్మకాన్ని నమోదు చేయండి",
+                modalSub: "కొత్త దిగుబడి అమ్మకం వివరాలు మరియు చెల్లింపు రసీదు స్థితిని నమోదు చేయండి",
+                lblDateSale: "అమ్మకం తేదీ *",
+                lblCropSold: "అమ్మిన పంట *",
+                optSelectCrop: "పంటను ఎంచుకోండి...",
+                lblQuantity: "పరిమాణం *",
+                lblUnit: "యూనిట్",
+                lblRatePerUnit: "ధర / యూనిట్ (₹) *",
+                lblTotalAmount: "మొత్తం మొత్తం (₹)",
+                lblBuyerMandi: "కొనుగోలుదారు / APMC మండి *",
+                sectionPaymentDetails: "చెల్లింపు వివరాలు",
+                lblAmountReceived: "అందుకున్న మొత్తం (₹)",
+                lblDateReceived: "అందుకున్న తేదీ",
+                lblPaymentMode: "చెల్లింపు మార్గం",
+                btnCancel: "రద్దు చేయి",
+                btnSaveEntry: "ఆర్డర్‌ను సేవ్ చేయి",
+                rcptModalHeader: "పంట సేకరణ చెల్లింపు రసీదు",
+                btnPrint: "ప్రింట్ చేయి",
+                btnDownloadPDF: "PDF డౌన్‌లోడ్ చేయి",
+                rcptHeaderTitle: "కిసాన్‌కోష్ పంట సేకరణ",
+                rcptHeaderSub: "అధికారిక చెల్లింపు రసీదు & ధాన్యం అమ్మకం ఇన్వాయిస్",
+                rcptApmcNotice: "ప్రభుత్వ నమోదు చేసిన APMC మండి భాగస్వామి",
+                rcptNoLabel: "రసీదు సంఖ్య:",
+                rcptDateLabel: "తేదీ:",
+                rcptFarmerDetails: "రైతు వివరాలు (అమ్మకందారు)",
+                rcptFarmerId: "రైతు ఐడీ:",
+                rcptFarmerLocation: "గ్రామం: రాంపూర్, జిల్లా: కర్నాల్, హర్యానా",
+                rcptMobile: "మొబైల్:",
+                rcptBuyerDetails: "సేకరణ సంస్థ / కొనుగోలుదారు",
+                rcptApmcLicense: "APMC లైసెన్స్ సంఖ్య:",
+                rcptYardNo: "ధాన్యపు మార్కెట్ యార్డ్ #2",
+                colCropDesc: "పంట వివరాలు",
+                colQuantity: "పరిమాణం",
+                colRateUnit: "ధర / యూనిట్",
+                colTotalAmount: "మొత్తం అమ్మకం మొత్తం",
+                rcptPaymentConfirmation: "చెల్లింపు నిర్ధారణ",
+                rcptStatusLabel: "చెల్లింపు స్థితి:",
+                rcptModeLabel: "చెల్లింపు విధానం:",
+                rcptDateRecdLabel: "అందుకున్న తేదీ:",
+                rcptSubtotal: "ఉప మొత్తం:",
+                rcptTaxWaiver: "మండి పన్ను (0% మినహాయింపు):",
+                rcptNetTotal: "నికర మొత్తం:",
+                rcptAmountPaidLabel: "అందుకున్న మొత్తం:",
+                rcptBalanceLabel: "మిగిలిన బకాయి:",
+                rcptOfficerSignature: "సేకరణ అధికారి సంతకం",
+                rcptFarmerSignature: "రైతు సంతకం / వేలిముద్ర",
+                rcptDisclaimer: "ఇది వ్యవసాయ సేకరణ ప్రమాణాల ప్రకారం సరిచూడబడిన కంప్యూటర్ జనరేటెడ్ రసీదు.",
+                btnReceipt: "రసీదు",
+                notReceived: "అందలేదు",
+                unitQuintal: "క్వింటాళ్ళు",
+                unitKg: "కిలోలు",
+                unitTon: "టన్నులు",
+                cropWheat: "గోధుమలు",
+                cropRice: "వరి / బియ్యం",
+                cropCotton: "పత్తి",
+                cropSugarcane: "చెరకు",
+                cropMustard: "ఆవాలు",
+                cropPulses: "పప్పుధాన్యాలు",
+                cropMaize: "జొన్నలు/మొక్కజొన్న",
+                cropSoybean: "సోయాబీన్",
+                modeBank: "బ్యాంక్ ట్రాన్స్‌ఫర్ (NEFT/RTGS)",
+                modeUPI: "UPI / Google Pay",
+                modeCheque: "చెక్",
+                modeCash: "నగదు"
+            },
+            as: {
+                appBadge: "সংগ্ৰহ খতিয়ান",
+                appSubheading: "কৃষি বজাৰ শস্য বিক্ৰী আৰু পৰিশোধ তথ্যকোষ",
+                btnRecordSale: "নতুন বিক্ৰী লিপিবদ্ধ কৰক",
+                btnExportCSV: "CSV ডাউনলোড কৰক",
+                kpiTotalRevenue: "মুঠ বিক্ৰী ৰাজহ",
+                kpiReceivedLabel: "প্ৰাপ্ত ধন:",
+                kpiTotalQuantity: "মুঠ বিক্ৰী হোৱা পৰিমাণ",
+                kpiAcrossAllProduce: "সকলো শস্য আৰু উৎপাদনত",
+                kpiOrdersCount: "সংগ্ৰহৰ অৰ্ডাৰ",
+                kpiCompletedTransactions: "সম্পূৰ্ণ লেনদেন",
+                kpiPendingBalance: "বাকী ধন",
+                kpiPendingSuffix: "অৰ্ডাৰ বাকী/আংশিক",
+                searchPlaceholder: "শস্য, ক্ৰেতা / বজাৰ, অৰ্ডাৰ আইডি বিচাৰক...",
+                filterAllCrops: "সকলো শস্য",
+                filterAllStatus: "সকলো পৰিশোধ স্থিতি",
+                statusPaid: "সম্পূৰ্ণ পৰিশোধিত",
+                statusPartial: "আংশিক পৰিশোধ",
+                statusPending: "বাকী আছে",
+                dateAllTime: "সকলো সময়",
+                dateThisMonth: "এই মাহত",
+                dateLast30: "শেহতীয়া ৩০ দিন",
+                dateThisYear: "এই বছৰ",
+                btnResetFilters: "ফিল্টাৰ পুনৰায় সংহি কৰক",
+                tableHeaderTitle: "শস্য বিক্ৰী সংগ্ৰহৰ নথিপত্ৰ",
+                receiptNotice: "ৰছিদ চাবলৈ বা ডাউনলোড কৰিবলৈ বুটামত ক্লিক কৰক",
+                colOrderIdDate: "অৰ্ডাৰ আইডি আৰু তারিখ",
+                colCropName: "শস্যৰ নাম",
+                colBuyerMandi: "ক্ৰেতা / APMC বজাৰ",
+                colQuantityRate: "পৰিমাণ আৰু দৰ",
+                colTotalSale: "মুঠ বিক্ৰী",
+                colPaymentReceived: "প্ৰাপ্ত ধন",
+                colStatusMode: "স্থিতি আৰু মাধ্যম",
+                colAction: "পদক্ষেপ",
+                emptyStateTitle: "কোনো সংগ্ৰহৰ অৰ্ডাৰ পোৱা নগ’ল",
+                emptyStateSub: "অনুগ্রহ কৰি আপোনাৰ ফিল্টাৰ বা সন্ধান সলনি কৰি চাওক।",
+                footerTagline: "স্বচ্ছ সংগ্ৰহ তথ্যৰে কৃষকসকলক সবলীকৰণ",
+                footerSub: "কৃষি বজাৰ আৰু প্ৰত্যক্ষ ক্ৰেতা লেনদেনৰ বাবে নিৰ্মিত।",
+                modalTitle: "শস্য বিক্ৰী লিপিবদ্ধ কৰক",
+                modalSub: "নতুন উৎপাদন বিক্ৰীৰ বিৱৰণ আৰু পৰিশোধ ৰছিদ স্থিতি দিয়ক",
+                lblDateSale: "বিক্ৰীৰ তারিখ *",
+                lblCropSold: "বিক্ৰী হোৱা শস্য *",
+                optSelectCrop: "শস্য বাছনি কৰক...",
+                lblQuantity: "পৰিমাণ *",
+                lblUnit: "একক",
+                lblRatePerUnit: "দৰ / একক (₹) *",
+                lblTotalAmount: "মুঠ ধন (₹)",
+                lblBuyerMandi: "ক্ৰেতা / APMC বজাৰ *",
+                sectionPaymentDetails: "পৰিশোধ বিৱৰণ",
+                lblAmountReceived: "প্ৰাপ্ত ধন (₹)",
+                lblDateReceived: "প্ৰাপ্তিৰ তারিখ",
+                lblPaymentMode: "পৰিশোধৰ মাধ্যম",
+                btnCancel: "বাতিল কৰক",
+                btnSaveEntry: "অৰ্ডাৰ সংৰক্ষণ কৰক",
+                rcptModalHeader: "শস্য সংগ্ৰহ পৰিশোধ ৰছিদ",
+                btnPrint: "প্ৰিন্ট কৰক",
+                btnDownloadPDF: "PDF ডাউনলোড কৰক",
+                rcptHeaderTitle: "কিষাণকোষ শস্য সংগ্ৰহ",
+                rcptHeaderSub: "চৰকাৰী পৰিশোধ ৰছিদ আৰু শস্য বিক্ৰী চালান",
+                rcptApmcNotice: "চৰকাৰী পঞ্জীয়নভুক্ত APMC বজাৰ অংশীদাৰ",
+                rcptNoLabel: "ৰছিদ নম্বৰ:",
+                rcptDateLabel: "তারিখ:",
+                rcptFarmerDetails: "কৃষকৰ বিৱৰণ (বিক্ৰেতা)",
+                rcptFarmerId: "কৃষক আইডি:",
+                rcptFarmerLocation: "গাঁও: ৰামপুৰ, জিলা: কৰ্নাল, হাৰিয়ানা",
+                rcptMobile: "মোবাইল:",
+                rcptBuyerDetails: "সংগ্ৰহ সংস্থা / ক্ৰেতা",
+                rcptApmcLicense: "APMC অনুজ্ঞাপত্ৰ নং:",
+                rcptYardNo: "শস্য বজাৰ চৌহদ #২",
+                colCropDesc: "শস্যৰ বিৱৰণ",
+                colQuantity: "পৰিমাণ",
+                colRateUnit: "দৰ / একক",
+                colTotalAmount: "মুঠ বিক্ৰীৰ ধন",
+                rcptPaymentConfirmation: "পৰিশোধ নিশ্চিতকৰণ",
+                rcptStatusLabel: "পৰিশোধ স্থিতি:",
+                rcptModeLabel: "পৰিশোধ মাধ্যম:",
+                rcptDateRecdLabel: "প্ৰাপ্তিৰ তারিখ:",
+                rcptSubtotal: "উপ-মুঠ:",
+                rcptTaxWaiver: "বজাৰ কৰ (০% ৰেহাই):",
+                rcptNetTotal: "মুঠ পৰিশোধযোগ্য ধন:",
+                rcptAmountPaidLabel: "প্ৰাপ্ত ধন:",
+                rcptBalanceLabel: "বাকী থকা ধন:",
+                rcptOfficerSignature: "সংগ্ৰহ বিষয়াৰ স্বাক্ষৰ",
+                rcptFarmerSignature: "কৃষকৰ স্বাক্ষৰ / বৃদ্ধাঙ্গুলিৰ চাপ",
+                rcptDisclaimer: "ই কৃষি সংগ্ৰহ মানদণ্ডৰ অধীনত সত্যাাপিত এটা কম্পিউটাৰ সংগৃহীত ৰছিদ।",
+                btnReceipt: "ৰছিদ",
+                notReceived: "পোৱা নাই",
+                unitQuintal: "কুইন্টল",
+                unitKg: "কিগ্ৰা",
+                unitTon: "টন",
+                cropWheat: "ঘেঁহু",
+                cropRice: "ধান / ধানৰ চাউল",
+                cropCotton: "কপাহ",
+                cropSugarcane: "কুঁহিয়াৰ",
+                cropMustard: "সৰিয়হ",
+                cropPulses: "দাইল",
+                cropMaize: "মাকৈ",
+                cropSoybean: "ছয়াবিন",
+                modeBank: "বেংক স্থানান্তৰ (NEFT/RTGS)",
+                modeUPI: "UPI / GPay",
+                modeCheque: "চেক",
+                modeCash: "নগদ"
+            },
+            kn: {
+                appBadge: "ಖರೀದಿ ಲೆಡ್ಜರ್",
+                appSubheading: "ಕೃಷಿ ಮಂಡಿ ಬೆಳೆ ಮಾರಾಟ ಮತ್ತು ಪಾವತಿ ಡೇಟಾಬೇಸ್",
+                btnRecordSale: "ಹೊಸ ಮಾರಾಟ ದಾಖಲಿಸಿ",
+                btnExportCSV: "CSV ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ",
+                kpiTotalRevenue: "ಒಟ್ಟು ಮಾರಾಟ ಆದಾಯ",
+                kpiReceivedLabel: "ಸ್ವೀಕರಿಸಿದ್ದು:",
+                kpiTotalQuantity: "ಮಾರಾಟವಾದ ಒಟ್ಟು ಪ್ರಮಾಣ",
+                kpiAcrossAllProduce: "ಎಲ್ಲಾ ಧಾನ್ಯ ಮತ್ತು ಕೃಷಿ ಉತ್ಪನ್ನಗಳು",
+                kpiOrdersCount: "ಖರೀದಿ ಆದೇಶಗಳು",
+                kpiCompletedTransactions: "ಪೂರ್ಣಗೊಂಡ ವಹಿವಾಟುಗಳು",
+                kpiPendingBalance: "ಬಾಕಿ ಮೊತ್ತ",
+                kpiPendingSuffix: "ಆದೇಶಗಳು ಬಾಕಿ/ಭಾಗಶಃ",
+                searchPlaceholder: "ಬೆಳೆ, ಖರೀದಿದಾರ / ಮಂಡಿ, ಆರ್ಡರ್ ಐಡಿ ಹುಡುಕಿ...",
+                filterAllCrops: "ಎಲ್ಲಾ ಬೆಳೆಗಳು",
+                filterAllStatus: "ಎಲ್ಲಾ ಪಾವತಿ ಸ್ಥಿತಿಗಳು",
+                statusPaid: "ಸಂಪೂರ್ಣ ಪಾವತಿಯಾಗಿದೆ",
+                statusPartial: "ಭಾಗಶಃ ಪಾವತಿ",
+                statusPending: "ಬಾಕಿ ಇದೆ",
+                dateAllTime: "ಎಲ್ಲಾ ಸಮಯದ",
+                dateThisMonth: "ಈ ತಿಂಗಳು",
+                dateLast30: "ಕಳೆದ 30 ದಿನಗಳು",
+                dateThisYear: "ಈ ವರ್ಷ",
+                btnResetFilters: "ಫಿಲ್ಟರ್ ಮರುಹೊಂದಿಸಿ",
+                tableHeaderTitle: "ಬೆಳೆ ಮಾರಾಟ ಖರೀದಿ ದಾಖಲೆಗಳು",
+                receiptNotice: "ರಸೀದಿ ವೀಕ್ಷಿಸಲು ಅಥವಾ ಡೌನ್‌ಲೋಡ್ ಮಾಡಲು ಬಟನ್ ಕ್ಲಿಕ್ ಮಾಡಿ",
+                colOrderIdDate: "ಆರ್ಡರ್ ಐಡಿ & ದಿನಾಂಕ",
+                colCropName: "ಬೆಳೆಯ ಹೆಸರು",
+                colBuyerMandi: "ಖರೀದಿದಾರ / APMC ಮಂಡಿ",
+                colQuantityRate: "ಪ್ರಮಾಣ & ದರ",
+                colTotalSale: "ಒಟ್ಟು ಮಾರಾಟ",
+                colPaymentReceived: "ಸ್ವೀಕರಿಸಿದ ಪಾವತಿ",
+                colStatusMode: "ಸ್ಥಿತಿ & ವಿಧಾನ",
+                colAction: "ಕ್ರಿಯೆ",
+                emptyStateTitle: "ಯಾವುದೇ ಖರೀದಿ ಆದೇಶಗಳು ಕಂಡುಬಂದಿಲ್ಲ",
+                emptyStateSub: "ದಯವಿಟ್ಟು ನಿಮ್ಮ ಫಿಲ್ಟರ್‌ಗಳನ್ನು ಅಥವಾ ಹುಡುಕಾಟವನ್ನು ಬದಲಾಯಿಸಿ.",
+                footerTagline: "ಪಾರದರ್ಶಕ ಖರೀದಿ ಡೇಟಾದೊಂದಿಗೆ ರೈತರನ್ನು ಸಬಲೀಕರಣಗೊಳಿಸುವುದು",
+                footerSub: "ಕೃಷಿ ಉತ್ಪನ್ನ ಮಾರುಕಟ್ಟೆಗಳು ಮತ್ತು ನೇರ ಖರೀದಿದಾರರ ವಹಿವಾಟುಗಳಿಗಾಗಿ ರೂಪಿಸಲಾಗಿದೆ.",
+                modalTitle: "ಬೆಳೆ ಮಾರಾಟ ದಾಖಲಿಸಿ",
+                modalSub: "ಹೊಸ ಉತ್ಪನ್ನ ಮಾರಾಟ ವಿವರಗಳು ಮತ್ತು ಪಾವತಿ ರಸೀದಿ ಸ್ಥಿತಿಯನ್ನು ನಮೂದಿಸಿ",
+                lblDateSale: "ಮಾರಾಟದ ದಿನಾಂಕ *",
+                lblCropSold: "ಮಾರಾಟವಾದ ಬೆಳೆ *",
+                optSelectCrop: "ಬೆಳೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ...",
+                lblQuantity: "ಪ್ರಮಾಣ *",
+                lblUnit: "ಘಟಕ",
+                lblRatePerUnit: "ದರ / ಘಟಕ (₹) *",
+                lblTotalAmount: "ಒಟ್ಟು ಮೊತ್ತ (₹)",
+                lblBuyerMandi: "ಖರೀದಿದಾರ / APMC ಮಂಡಿ *",
+                sectionPaymentDetails: "ಪಾವತಿ ವಿವರಗಳು",
+                lblAmountReceived: "ಸ್ವೀಕರಿಸಿದ ಮೊತ್ತ (₹)",
+                lblDateReceived: "ಸ್ವೀಕರಿಸಿದ ದಿನಾಂಕ",
+                lblPaymentMode: "ಪಾವತಿ ವಿಧಾನ",
+                btnCancel: "ರದ್ದುಮಾಡಿ",
+                btnSaveEntry: "ಆದೇಶವನ್ನು ಉಳಿಸಿ",
+                rcptModalHeader: "ಬೆಳೆ ಖರೀದಿ ಪಾವತಿ ರಸೀದಿ",
+                btnPrint: "ಪ್ರಿಂಟ್ ಮಾಡಿ",
+                btnDownloadPDF: "PDF ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ",
+                rcptHeaderTitle: "ಕಿಸಾನ್‌ಕೋಶ್ ಬೆಳೆ ಖರೀದಿ",
+                rcptHeaderSub: "ಅಧಿಕೃತ ಪಾವತಿ ರಸೀದಿ & ಧಾನ್ಯ ಮಾರಾಟ ಇನ್‌ವಾಯ್ಸ್",
+                rcptApmcNotice: "ಸರ್ಕಾರ ನೋಂದಾಯಿತ APMC ಮಂಡಿ ಪಾಲುದಾರ",
+                rcptNoLabel: "ರಸೀದಿ ಸಂಖ್ಯೆ:",
+                rcptDateLabel: "ದಿನಾಂಕ:",
+                rcptFarmerDetails: "ರೈತರ ವಿವರಗಳು (ಮಾರಾಟಗಾರ)",
+                rcptFarmerId: "ರೈತ ಐಡಿ:",
+                rcptFarmerLocation: "ಗ್ರಾಮ: ರಾಂಪುರ, ಜಿಲ್ಲೆ: ಕರ್ನಾಲ್, ಹರಿಯಾಣ",
+                rcptMobile: "ಮೊಬೈಲ್:",
+                rcptBuyerDetails: "ಖರೀದಿ ಸಂಸ್ಥೆ / ಖರೀದಿದಾರ",
+                rcptApmcLicense: "APMC ಪರವಾನಗಿ ಸಂಖ್ಯೆ:",
+                rcptYardNo: "ಧಾನ್ಯ ಮಾರುಕಟ್ಟೆ ಯಾರ್ಡ್ #2",
+                colCropDesc: "ಬೆಳೆ ವಿವರಣೆ",
+                colQuantity: "ಪ್ರಮಾಣ",
+                colRateUnit: "ದರ / ಘಟಕ",
+                colTotalAmount: "ಒಟ್ಟು ಮಾರಾಟ ಮೊತ್ತ",
+                rcptPaymentConfirmation: "ಪಾವತಿ ದೃಢೀಕರಣ",
+                rcptStatusLabel: "ಪಾವತಿ ಸ್ಥಿತಿ:",
+                rcptModeLabel: "ಪಾವತಿ ವಿಧಾನ:",
+                rcptDateRecdLabel: "ಸ್ವೀಕರಿಸಿದ ದಿನಾಂಕ:",
+                rcptSubtotal: "ಉಪ ಮೊತ್ತ:",
+                rcptTaxWaiver: "ಮಂಡಿ ತೆರಿಗೆ (0% ವಿನಾಯಿತಿ):",
+                rcptNetTotal: "ಒಟ್ಟು ನಿವ್ವಳ ಮೊತ್ತ:",
+                rcptAmountPaidLabel: "ಸ್ವೀಕರಿಸಿದ ಮೊತ್ತ:",
+                rcptBalanceLabel: "ಉಳಿದ ಬಾಕಿ:",
+                rcptOfficerSignature: "ಖರೀದಿ ಅಧಿಕಾರಿಯ ಸಹಿ",
+                rcptFarmerSignature: "ರೈತರ ಸಹಿ / ಹೆಬ್ಬೆರಳ ಗುರುತು",
+                rcptDisclaimer: "ಇದು ಕೃಷಿ ಖರೀದಿ ಮಾನದಂಡಗಳ ಅಡಿಯಲ್ಲಿ ಪರಿಶೀಲಿಸಲಾದ ಕಂಪ್ಯೂಟರ್ ಸೃಷ್ಟಿಸಿದ ರಸೀದಿಯಾಗಿದೆ.",
+                btnReceipt: "ರಸೀದಿ",
+                notReceived: "ಸ್ವೀಕರಿಸಲಾಗಿಲ್ಲ",
+                unitQuintal: "ಕ್ವಿಂಟಾಲ್",
+                unitKg: "ಕೆಜಿ",
+                unitTon: "ಟನ್",
+                cropWheat: "ಗೋಧಿ",
+                cropRice: "ಅಕ್ಕಿ / ಭತ್ತ",
+                cropCotton: "ಹತ್ತಿ",
+                cropSugarcane: "ಕಬ್ಬು",
+                cropMustard: "ಸಾಸಿವೆ",
+                cropPulses: "ಬೇಳೆಕಾಳುಗಳು",
+                cropMaize: "ಮೆಕ್ಕೆಜೋಳ",
+                cropSoybean: "ಸೋಯಾಬೀನ್",
+                modeBank: "ಬ್ಯಾಂಕ್ ವರ್ಗಾವಣೆ (NEFT/RTGS)",
+                modeUPI: "UPI / GPay",
+                modeCheque: "ಚೆಕ್",
+                modeCash: "ನಗದು"
+            }
+        };
+
+        let currentLang = 'en';
+
+        function t(key) {
+            return (translations[currentLang] && translations[currentLang][key]) || translations['en'][key] || key;
+        }
+
+        function changeLanguage(lang) {
+            if (!translations[lang]) return;
+            currentLang = lang;
+
+            // 1. Update text content for elements with data-i18n attribute
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (key && translations[currentLang][key]) {
+                    el.innerText = translations[currentLang][key];
+                }
+            });
+
+            // 2. Update placeholders for inputs with data-i18n-ph
+            document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+                const key = el.getAttribute('data-i18n-ph');
+                if (key && translations[currentLang][key]) {
+                    el.placeholder = translations[currentLang][key];
+                }
+            });
+
+            // 3. Re-render dynamic table and KPIs to apply translation context
+            applyFilters();
+            
+            // 4. Update Modal receipt if currently opened
+            if (currentReceiptOrder && !document.getElementById('receiptModal').classList.contains('hidden')) {
+                openReceiptModal(currentReceiptOrder.id);
+            }
+        }
+
+        // --- Sample Pre-loaded Realistic Farmer Sales Procurement Data ---
+        let sampleOrders = [
+            {
+                id: "ORD-2026-104",
+                saleDate: "2026-08-28",
+                cropName: "Wheat",
+                quantity: 85,
+                unit: "Quintal",
+                unitPrice: 2275,
+                totalAmount: 193375,
+                paymentReceived: 193375,
+                paymentDate: "2026-08-30",
+                paymentStatus: "Paid",
+                paymentMode: "Direct Bank Transfer (NEFT/RTGS)",
+                buyerName: "Karnal Central APMC Mandi"
+            },
+            {
+                id: "ORD-2026-103",
+                saleDate: "2026-08-15",
+                cropName: "Rice / Paddy",
+                quantity: 120,
+                unit: "Quintal",
+                unitPrice: 2183,
+                totalAmount: 261960,
+                paymentReceived: 150000,
+                paymentDate: "2026-08-18",
+                paymentStatus: "Partial",
+                paymentMode: "UPI / GPay",
+                buyerName: "AgroCorp Processing Ltd"
+            },
+            {
+                id: "ORD-2026-102",
+                saleDate: "2026-07-22",
+                cropName: "Mustard",
+                quantity: 40,
+                unit: "Quintal",
+                unitPrice: 5650,
+                totalAmount: 226000,
+                paymentReceived: 226000,
+                paymentDate: "2026-07-24",
+                paymentStatus: "Paid",
+                paymentMode: "Cheque",
+                buyerName: "Haryana Co-operative Federation"
+            },
+            {
+                id: "ORD-2026-101",
+                saleDate: "2026-09-02",
+                cropName: "Sugarcane",
+                quantity: 350,
+                unit: "Quintal",
+                unitPrice: 355,
+                totalAmount: 124250,
+                paymentReceived: 0,
+                paymentDate: null,
+                paymentStatus: "Pending",
+                paymentMode: "Direct Bank Transfer (NEFT/RTGS)",
+                buyerName: "Saraswati Sugar Mill"
+            },
+            {
+                id: "ORD-2026-100",
+                saleDate: "2026-06-10",
+                cropName: "Cotton",
+                quantity: 25,
+                unit: "Quintal",
+                unitPrice: 6620,
+                totalAmount: 165500,
+                paymentReceived: 165500,
+                paymentDate: "2026-06-12",
+                paymentStatus: "Paid",
+                paymentMode: "Direct Bank Transfer (NEFT/RTGS)",
+                buyerName: "Vardhman Textile Traders"
+            },
+            {
+                id: "ORD-2026-099",
+                saleDate: "2026-05-18",
+                cropName: "Pulses / Dal",
+                quantity: 30,
+                unit: "Quintal",
+                unitPrice: 5440,
+                totalAmount: 163200,
+                paymentReceived: 163200,
+                paymentDate: "2026-05-20",
+                paymentStatus: "Paid",
+                paymentMode: "Cash",
+                buyerName: "Local Mandi Agent Ramlal"
+            }
+        ];
+
+        // Crop Configuration with Icons and Colors
+        const cropConfigs = {
+            'Wheat': { icon: 'fa-wheat-awn', color: 'bg-amber-100 text-amber-800 border-amber-300', key: 'cropWheat' },
+            'Rice / Paddy': { icon: 'fa-bowl-rice', color: 'bg-emerald-100 text-emerald-800 border-emerald-300', key: 'cropRice' },
+            'Cotton': { icon: 'fa-cloud', color: 'bg-slate-100 text-slate-800 border-slate-300', key: 'cropCotton' },
+            'Sugarcane': { icon: 'fa-plant-wilt', color: 'bg-green-100 text-green-800 border-green-300', key: 'cropSugarcane' },
+            'Mustard': { icon: 'fa-sun', color: 'bg-yellow-100 text-yellow-800 border-yellow-300', key: 'cropMustard' },
+            'Pulses / Dal': { icon: 'fa-seedling', color: 'bg-orange-100 text-orange-800 border-orange-300', key: 'cropPulses' },
+            'Maize': { icon: 'fa-cubes-stacked', color: 'bg-amber-100 text-amber-800 border-amber-300', key: 'cropMaize' },
+            'Soybean': { icon: 'fa-leaf', color: 'bg-teal-100 text-teal-800 border-teal-300', key: 'cropSoybean' }
+        };
+
+        let currentActiveOrders = [...sampleOrders];
+        let currentReceiptOrder = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderOrdersTable(sampleOrders);
+            updateKPIs(sampleOrders);
+            
+            // Set default date in new order form to today
+            document.getElementById('formSaleDate').valueAsDate = new Date();
+        });
+
+        function renderOrdersTable(data) {
+            const tbody = document.getElementById('ordersTableBody');
+            const emptyState = document.getElementById('emptyState');
+            tbody.innerHTML = '';
+
+            document.getElementById('recordsCounter').innerText = `${data.length} ${t('colAction') === 'Action' ? 'Entries' : ''}`;
+
+            if (data.length === 0) {
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+                emptyState.classList.remove('flex');
+            }
+
+            data.forEach(order => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50/80 transition-colors";
+
+                const cropMeta = cropConfigs[order.cropName] || { icon: 'fa-leaf', color: 'bg-slate-100 text-slate-700 border-slate-200', key: 'cropWheat' };
+                const translatedCropName = t(cropMeta.key) || order.cropName;
+
+                // Status Badge Styling & Translation
+                let statusBadge = '';
+                if (order.paymentStatus === 'Paid') {
+                    statusBadge = `<span class="bg-agri-100 text-agri-800 border border-agri-200 text-xs font-medium px-2.5 py-1 rounded-full flex items-center justify-center gap-1">
+                                    <i class="fa-solid fa-circle-check text-xs"></i> ${t('statusPaid')}
+                                  </span>`;
+                } else if (order.paymentStatus === 'Partial') {
+                    statusBadge = `<span class="bg-amber-100 text-amber-800 border border-amber-200 text-xs font-medium px-2.5 py-1 rounded-full flex items-center justify-center gap-1">
+                                    <i class="fa-solid fa-clock text-xs"></i> ${t('statusPartial')}
+                                  </span>`;
+                } else {
+                    statusBadge = `<span class="bg-red-100 text-red-700 border border-red-200 text-xs font-medium px-2.5 py-1 rounded-full flex items-center justify-center gap-1">
+                                    <i class="fa-solid fa-circle-exclamation text-xs"></i> ${t('statusPending')}
+                                  </span>`;
+                }
+
+                // Translated Units
+                let unitText = order.unit;
+                if (order.unit === 'Quintal') unitText = t('unitQuintal');
+                else if (order.unit === 'Kg') unitText = t('unitKg');
+                else if (order.unit === 'Ton') unitText = t('unitTon');
+
+                tr.innerHTML = `
+                    <td class="py-3.5 px-4">
+                        <div class="font-bold text-slate-900 font-mono">${order.id}</div>
+                        <div class="text-xs text-slate-500">${formatDate(order.saleDate)}</div>
+                    </td>
+                    <td class="py-3.5 px-4">
+                        <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-lg border ${cropMeta.color} text-xs font-semibold crop-badge">
+                            <i class="fa-solid ${cropMeta.icon}"></i>
+                            <span>${translatedCropName}</span>
+                        </div>
+                    </td>
+                    <td class="py-3.5 px-4">
+                        <div class="font-semibold text-slate-800 text-xs">${order.buyerName}</div>
+                    </td>
+                    <td class="py-3.5 px-4 text-right">
+                        <div class="font-medium text-slate-900">${order.quantity} ${unitText}</div>
+                        <div class="text-xs text-slate-400">₹${order.unitPrice.toLocaleString('en-IN')} / ${unitText}</div>
+                    </td>
+                    <td class="py-3.5 px-4 text-right font-bold text-slate-900">
+                        ₹${order.totalAmount.toLocaleString('en-IN')}
+                    </td>
+                    <td class="py-3.5 px-4 text-right">
+                        <div class="font-semibold text-agri-700">₹${order.paymentReceived.toLocaleString('en-IN')}</div>
+                        <div class="text-[11px] text-slate-400">${order.paymentDate ? formatDate(order.paymentDate) : t('notReceived')}</div>
+                    </td>
+                    <td class="py-3.5 px-4 text-center">
+                        <div class="flex flex-col items-center gap-1">
+                            ${statusBadge}
+                            <span class="text-[10px] text-slate-400 truncate max-w-[120px]" title="${order.paymentMode}">${order.paymentMode}</span>
+                        </div>
+                    </td>
+                    <td class="py-3.5 px-4 text-center">
+                        <button onclick="openReceiptModal('${order.id}')" 
+                            class="bg-agri-50 hover:bg-agri-100 text-agri-800 border border-agri-200 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1.5 mx-auto shadow-2xs hover:shadow-xs">
+                            <i class="fa-solid fa-receipt"></i>
+                            <span>${t('btnReceipt')}</span>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateKPIs(data) {
+            let totalEarnings = 0;
+            let totalReceived = 0;
+            let totalQuantityQuintals = 0;
+            let pendingAmount = 0;
+            let pendingOrdersCount = 0;
+
+            data.forEach(order => {
+                totalEarnings += order.totalAmount;
+                totalReceived += order.paymentReceived;
+                
+                if (order.unit === 'Kg') {
+                    totalQuantityQuintals += order.quantity / 100;
+                } else if (order.unit === 'Ton') {
+                    totalQuantityQuintals += order.quantity * 10;
+                } else {
+                    totalQuantityQuintals += order.quantity;
+                }
+
+                const balance = order.totalAmount - order.paymentReceived;
+                if (balance > 0) {
+                    pendingAmount += balance;
+                    pendingOrdersCount++;
+                }
+            });
+
+            document.getElementById('kpiTotalEarnings').innerText = `₹${totalEarnings.toLocaleString('en-IN')}`;
+            document.getElementById('kpiReceivedAmount').innerText = `₹${totalReceived.toLocaleString('en-IN')}`;
+            document.getElementById('kpiTotalQuantity').innerText = `${totalQuantityQuintals.toFixed(1)} ${t('unitQuintal')}`;
+            document.getElementById('kpiTotalOrders').innerText = data.length;
+            document.getElementById('kpiPendingAmount').innerText = `₹${pendingAmount.toLocaleString('en-IN')}`;
+            document.getElementById('kpiPendingCount').innerText = `${pendingOrdersCount} ${t('kpiPendingSuffix')}`;
+        }
+
+        function applyFilters() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const selectedCrop = document.getElementById('cropFilter').value;
+            const selectedStatus = document.getElementById('statusFilter').value;
+
+            const filtered = sampleOrders.filter(order => {
+                const matchesSearch = order.id.toLowerCase().includes(query) ||
+                                      order.cropName.toLowerCase().includes(query) ||
+                                      order.buyerName.toLowerCase().includes(query);
+                
+                const matchesCrop = selectedCrop === 'ALL' || order.cropName === selectedCrop;
+                const matchesStatus = selectedStatus === 'ALL' || order.paymentStatus === selectedStatus;
+
+                return matchesSearch && matchesCrop && matchesStatus;
+            });
+
+            currentActiveOrders = filtered;
+            renderOrdersTable(filtered);
+            updateKPIs(filtered);
+        }
+
+        function handleDatePreset(preset) {
+            const now = new Date();
+            let filtered = [...sampleOrders];
+
+            if (preset === 'THIS_MONTH') {
+                const currentMonth = now.getMonth();
+                const currentYear = now.getFullYear();
+                filtered = sampleOrders.filter(o => {
+                    const d = new Date(o.saleDate);
+                    return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+                });
+            } else if (preset === 'LAST_30') {
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(now.getDate() - 30);
+                filtered = sampleOrders.filter(o => new Date(o.saleDate) >= thirtyDaysAgo);
+            } else if (preset === 'THIS_YEAR') {
+                const currentYear = now.getFullYear();
+                filtered = sampleOrders.filter(o => new Date(o.saleDate).getFullYear() === currentYear);
+            }
+
+            currentActiveOrders = filtered;
+            renderOrdersTable(filtered);
+            updateKPIs(filtered);
+        }
+
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('cropFilter').value = 'ALL';
+            document.getElementById('statusFilter').value = 'ALL';
+            document.getElementById('datePreset').value = 'ALL';
+            currentActiveOrders = [...sampleOrders];
+            renderOrdersTable(sampleOrders);
+            updateKPIs(sampleOrders);
+        }
+
+        function openNewOrderModal() {
+            document.getElementById('newOrderModal').classList.remove('hidden');
+        }
+
+        function closeNewOrderModal() {
+            document.getElementById('newOrderModal').classList.add('hidden');
+            document.getElementById('orderForm').reset();
+            document.getElementById('formSaleDate').valueAsDate = new Date();
+        }
+
+        function calculateTotal() {
+            const qty = parseFloat(document.getElementById('formQuantity').value) || 0;
+            const price = parseFloat(document.getElementById('formUnitPrice').value) || 0;
+            const total = qty * price;
+            document.getElementById('formTotalAmount').value = Math.round(total);
+        }
+
+        function handleSaveOrder(e) {
+            e.preventDefault();
+
+            const qty = parseFloat(document.getElementById('formQuantity').value) || 0;
+            const price = parseFloat(document.getElementById('formUnitPrice').value) || 0;
+            const total = Math.round(qty * price);
+            const received = parseFloat(document.getElementById('formPaymentReceived').value) || 0;
+
+            let status = 'Pending';
+            if (received >= total) {
+                status = 'Paid';
+            } else if (received > 0) {
+                status = 'Partial';
+            }
+
+            const newOrder = {
+                id: `ORD-2026-${105 + sampleOrders.length}`,
+                saleDate: document.getElementById('formSaleDate').value,
+                cropName: document.getElementById('formCropName').value,
+                quantity: qty,
+                unit: document.getElementById('formUnit').value,
+                unitPrice: price,
+                totalAmount: total,
+                paymentReceived: received,
+                paymentDate: document.getElementById('formPaymentDate').value || null,
+                paymentStatus: status,
+                paymentMode: document.getElementById('formPaymentMode').value,
+                buyerName: document.getElementById('formBuyerName').value
+            };
+
+            sampleOrders.unshift(newOrder);
+            closeNewOrderModal();
+            applyFilters();
+        }
+
+        function openReceiptModal(orderId) {
+            const order = sampleOrders.find(o => o.id === orderId);
+            if (!order) return;
+
+            currentReceiptOrder = order;
+
+            const cropMeta = cropConfigs[order.cropName] || { key: 'cropWheat' };
+            const translatedCropName = t(cropMeta.key) || order.cropName;
+
+            let unitText = order.unit;
+            if (order.unit === 'Quintal') unitText = t('unitQuintal');
+            else if (order.unit === 'Kg') unitText = t('unitKg');
+            else if (order.unit === 'Ton') unitText = t('unitTon');
+
+            // Fill Receipt Modal DOM Elements
+            document.getElementById('rcptOrderNo').innerText = order.id;
+            document.getElementById('rcptSaleDate').innerText = formatDate(order.saleDate);
+            document.getElementById('rcptBuyerName').innerText = order.buyerName;
+            document.getElementById('rcptCropName').innerText = translatedCropName;
+            document.getElementById('rcptQuantity').innerText = `${order.quantity} ${unitText}`;
+            document.getElementById('rcptUnitPrice').innerText = `₹${order.unitPrice.toLocaleString('en-IN')} / ${unitText}`;
+            document.getElementById('rcptTotalAmount').innerText = `₹${order.totalAmount.toLocaleString('en-IN')}`;
+            document.getElementById('rcptSubtotal').innerText = `₹${order.totalAmount.toLocaleString('en-IN')}`;
+            document.getElementById('rcptGrandTotal').innerText = `₹${order.totalAmount.toLocaleString('en-IN')}`;
+            document.getElementById('rcptAmountPaid').innerText = `₹${order.paymentReceived.toLocaleString('en-IN')}`;
+
+            const balance = order.totalAmount - order.paymentReceived;
+            document.getElementById('rcptBalance').innerText = `₹${balance.toLocaleString('en-IN')}`;
+            
+            if (balance <= 0) {
+                document.getElementById('rcptBalanceRow').classList.add('hidden');
+            } else {
+                document.getElementById('rcptBalanceRow').classList.remove('hidden');
+            }
+
+            // Status Badge & Watermark
+            const watermark = document.getElementById('receiptWatermark');
+            const statusBadge = document.getElementById('rcptStatusBadge');
+            
+            if (order.paymentStatus === 'Paid') {
+                watermark.innerText = 'PAID';
+                watermark.className = 'absolute right-6 top-6 uppercase font-bold text-3xl opacity-15 rotate-[-12deg] pointer-events-none select-none tracking-widest border-4 border-agri-600 text-agri-600 px-4 py-1 rounded-lg';
+                statusBadge.innerText = t('statusPaid').toUpperCase();
+                statusBadge.className = 'font-bold text-agri-700';
+            } else if (order.paymentStatus === 'Partial') {
+                watermark.innerText = 'PARTIAL';
+                watermark.className = 'absolute right-6 top-6 uppercase font-bold text-3xl opacity-15 rotate-[-12deg] pointer-events-none select-none tracking-widest border-4 border-amber-600 text-amber-600 px-4 py-1 rounded-lg';
+                statusBadge.innerText = t('statusPartial').toUpperCase();
+                statusBadge.className = 'font-bold text-amber-600';
+            } else {
+                watermark.innerText = 'PENDING';
+                watermark.className = 'absolute right-6 top-6 uppercase font-bold text-3xl opacity-15 rotate-[-12deg] pointer-events-none select-none tracking-widest border-4 border-red-600 text-red-600 px-4 py-1 rounded-lg';
+                statusBadge.innerText = t('statusPending').toUpperCase();
+                statusBadge.className = 'font-bold text-red-600';
+            }
+
+            document.getElementById('rcptPaymentMode').innerText = order.paymentMode;
+            document.getElementById('rcptPaymentDate').innerText = order.paymentDate ? formatDate(order.paymentDate) : t('notReceived');
+
+            document.getElementById('receiptModal').classList.remove('hidden');
+        }
+
+        function closeReceiptModal() {
+            document.getElementById('receiptModal').classList.add('hidden');
+        }
+
+        function printReceipt() {
+            window.print();
+        }
+
+        function downloadPDFReceipt() {
+            if (!currentReceiptOrder) return;
+            
+            const element = document.getElementById('printableReceipt');
+            const opt = {
+                margin:       [0.3, 0.3, 0.3, 0.3],
+                filename:     `Crop_Receipt_${currentReceiptOrder.id}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).save();
+        }
+
+        function exportToCSV() {
+            if (currentActiveOrders.length === 0) {
+                alert("No records available to export!");
+                return;
+            }
+
+            const headers = ["Order ID", "Date of Sale", "Crop Name", "Quantity", "Unit", "Unit Price (INR)", "Total Sale (INR)", "Payment Received (INR)", "Payment Date", "Payment Status", "Payment Mode", "Buyer Name"];
+            
+            const rows = currentActiveOrders.map(o => [
+                `"${o.id}"`,
+                `"${o.saleDate}"`,
+                `"${o.cropName}"`,
+                o.quantity,
+                `"${o.unit}"`,
+                o.unitPrice,
+                o.totalAmount,
+                o.paymentReceived,
+                `"${o.paymentDate || ''}"`,
+                `"${o.paymentStatus}"`,
+                `"${o.paymentMode}"`,
+                `"${o.buyerName}"`
+            ]);
+
+            const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Farmer_Crop_Sales_Ledger_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '--';
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateStr).toLocaleDateString(currentLang === 'en' ? 'en-IN' : currentLang, options);
+        }
+    </script>
+</body>
+</html>

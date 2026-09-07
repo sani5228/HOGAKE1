@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en" id="htmlRoot">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FASAL BAZAR </title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="home.css">
+  <script src="home.js" defer></script>
+
+</head>
+
+<body>
+
+  <div class="cloud-drift">
+    <svg class="cloud cloud-a" viewBox="0 0 160 60" fill="none">
+      <ellipse cx="40" cy="38" rx="34" ry="18" fill="#CFE6F5" />
+      <ellipse cx="80" cy="28" rx="40" ry="22" fill="#CFE6F5" />
+      <ellipse cx="120" cy="38" rx="30" ry="16" fill="#CFE6F5" />
+    </svg>
+    <svg class="cloud cloud-b" viewBox="0 0 160 60" fill="none">
+      <ellipse cx="40" cy="38" rx="34" ry="18" fill="#CFE6F5" />
+      <ellipse cx="80" cy="28" rx="40" ry="22" fill="#CFE6F5" />
+      <ellipse cx="120" cy="38" rx="30" ry="16" fill="#CFE6F5" />
+    </svg>
+    <svg class="cloud cloud-c" viewBox="0 0 160 60" fill="none">
+      <ellipse cx="40" cy="38" rx="34" ry="18" fill="#CFE6F5" />
+      <ellipse cx="80" cy="28" rx="40" ry="22" fill="#CFE6F5" />
+      <ellipse cx="120" cy="38" rx="30" ry="16" fill="#CFE6F5" />
+    </svg>
+    <svg class="cloud cloud-d" viewBox="0 0 160 60" fill="none">
+      <ellipse cx="40" cy="38" rx="34" ry="18" fill="#CFE6F5" />
+      <ellipse cx="80" cy="28" rx="40" ry="22" fill="#CFE6F5" />
+      <ellipse cx="120" cy="38" rx="30" ry="16" fill="#CFE6F5" />
+    </svg>
+  </div>
+
+  <header class="site-header">
+    <div class="nav-inner">
+      <a href="#home" class="brand">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 2C12 2 6 6.5 6 12.5C6 16.09 8.69 19 12 19C15.31 19 18 16.09 18 12.5C18 6.5 12 2 12 2Z"
+            fill="#C97A2B" />
+          <path d="M12 19V22" stroke="#4A2E1E" stroke-width="1.6" stroke-linecap="round" />
+        </svg>
+        <span>FASAL</span>
+      </a>
+      <div class="nav-right">
+        <ul class="nav-links">
+          <li><a href="#home" data-i18n="nav_home">Home</a></li>
+          <li><a href="#about" data-i18n="nav_about">About</a></li>
+          <li><a href="#contact" data-i18n="nav_contact">Contact</a></li>
+          <li><a href="#help" data-i18n="nav_help">Help</a></li>
+        </ul>
+
+        <a href="index.html" class="btn-register" data-i18n="nav_register">Registration</a>
+
+        <div class="lang-wrap needs-attention" id="langWrap">
+          <button class="lang-btn" id="langBtn" aria-haspopup="true" aria-expanded="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M3 12h18M12 3c2.4 2.6 3.6 5.7 3.6 9s-1.2 6.4-3.6 9c-2.4-2.6-3.6-5.7-3.6-9s1.2-6.4 3.6-9z" />
+            </svg>
+            <span id="langBtnLabel">EN</span>
+          </button>
+          <div class="lang-tooltip" id="langTooltip">Tap here to read this page in your language</div>
+          <div class="lang-menu" id="langMenu"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-panel" id="mobilePanel">
+      <ul>
+        <li><a href="#home" data-i18n="nav_home">Home</a></li>
+        <li><a href="#about" data-i18n="nav_about">About</a></li>
+        <li><a href="#contact" data-i18n="nav_contact">Contact</a></li>
+        <li><a href="#help" data-i18n="nav_help">Help</a></li>
+      </ul>
+      <a href="index.html" class="btn-register" data-i18n="nav_register">Registration</a>
+      <div class="mobile-lang">
+        <div class="lbl" data-i18n="lang_label">Choose language</div>
+        <div class="mobile-lang-grid" id="mobileLangGrid"></div>
+      </div>
+    </div>
+
+    <marquee scrollamount="6">FASAL - Welcomes all the farmers to trade their harvest with clarity. You can book your
+      slot by logging in or by calling on our TOLL-FREE NUMBER 1800-123-4567 . </marquee>
+  </header>
+
+  <main>
+    <section class="hero" id="home">
+      <div class="hero-inner">
+        <div class="hero-copy">
+          <div class="kicker" data-i18n="hero_kicker"> </div>
+          <h1 data-i18n="hero_title">Plan your harvest with clarity</h1>
+          <p data-i18n="hero_body">FASAL brings weather, sales, and market data into one place, so you can decide what to
+            sow, when to sell, and where to sell — without the guesswork.</p>
+          <div class="hero-actions">
+            <a href="login.html" class="btn btn-primary" data-i18n="hero_cta_primary">Login</a>
+            <a href="#about" class="btn btn-ghost" data-i18n="hero_cta_ghost">Learn more</a>
+          </div>
+          <section class="features" id="about">
+            <div class="section-head">
+              <h2 data-i18n="features_title">Everything your field needs, in one dashboard</h2>
+              <p data-i18n="features_sub">From sowing to selling, FASAL keeps your decisions grounded in real data
+                rather than habit alone.</p>
+            </div>
+        </div>
+
+      </div>
+      <div class="feature-grid">
+        <div class="feature">
+          <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M4 15C4 15 6 8 12 8C18 8 20 15 20 15" stroke="#5C8A3A" stroke-width="1.8"
+                stroke-linecap="round" />
+              <circle cx="12" cy="8" r="2" fill="#5C8A3A" />
+            </svg>
+          </div>
+          <h3 data-i18n="feature1_title">Weather forecasts</h3>
+          <p data-i18n="feature1_body">7-day, field-level forecasts so irrigation and spraying happen at the right
+            moment.</p>
+        </div>
+        <div class="feature">
+          <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M12 3L21 8V16L12 21L3 16V8L12 3Z" stroke="#5C8A3A" stroke-width="1.8" stroke-linejoin="round" />
+            </svg>
+          </div>
+          <h3 data-i18n="feature2_title">Soil health tracking</h3>
+          <p data-i18n="feature2_body">Log soil tests over seasons and get simple recommendations for the next crop
+            cycle.</p>
+        </div>
+        <div class="feature">
+          <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M4 19H20M7 19V11M12 19V6M17 19V13" stroke="#5C8A3A" stroke-width="1.8" stroke-linecap="round" />
+            </svg>
+          </div>
+          <h3 data-i18n="feature3_title">Market prices</h3>
+          <p data-i18n="feature3_body">Compare mandi prices nearby before you decide where and when to sell your
+            harvest.</p>
+        </div>
+    </section>
+
+    <section class="cta-strip" id="contact">
+      <div class="cta-inner">
+        <div>
+          <h2 data-i18n="cta_title">Ready to plan your next season?</h2>
+          <p data-i18n="cta_body">Setting up takes less than two minutes — just your name and phone number to begin.</p>
+        </div>
+        <a href="index.html" class="btn btn-primary" data-i18n="cta_button">Register now</a>
+      </div>
+    </section>
+  </main>
+  <!-- ============ TOLL-FREE FLOATING BUTTON ============ -->
+  <button class="toll-free-fab" id="tollFreeFab" aria-label="Toll-free helpline">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path
+        d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
+    </svg>
+  </button>
+
+  <!-- ============ TOLL-FREE MODAL: KEYPAD PHONE MOCKUP ============ -->
+  <div class="phone-modal-overlay" id="phoneModalOverlay">
+    <div class="phone-modal-wrap">
+      <button class="phone-modal-close" id="phoneModalClose" aria-label="Close">&times;</button>
+
+      <div class="keypad-phone">
+        <div class="phone-speaker"></div>
+
+        <div class="phone-screen">
+          <div class="screen-header">
+            <span class="signal-bars">📶</span>
+            <span>FASAL Helpline</span>
+            <span class="battery">🔋</span>
+          </div>
+          <div class="screen-body">
+            <div class="screen-number" data-i18n="phone_number">1800-123-4567</div>
+            <div class="screen-hint" data-i18n="phone_hint">Toll-free · works on any phone</div>
+            <ol class="screen-steps">
+              <li><span class="key-badge" data-i18n="dial">Dial</span> 1800-123-4567</li>
+              <li><span class="key-badge" data-i18n="language_selection">1</span> हिन्दी &nbsp; <span class="key-badge" data-i18n="language_selection">2</span> English</li>
+              <li><span class="key-badge" data-i18n="weather_updates">1</span> Weather updates</li>
+              <li><span class="key-badge" data-i18n="mandi_prices">2</span> Mandi prices</li>
+              <li><span class="key-badge" data-i18n="book_procurement_slot">3</span> Book procurement slot</li>
+              <li><span class="key-badge" data-i18n="talk_to_executive">0</span> Talk to an executive</li>
+            </ol>
+          </div>
+        </div>
+
+        <div class="phone-keys">
+          <button>1</button><button>2</button><button>3</button>
+          <button>4</button><button>5</button><button>6</button>
+          <button>7</button><button>8</button><button>9</button>
+          <button>*</button><button>0</button><button>#</button>
+        </div>
+
+        <div class="phone-call-btn" title="Call">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path
+              d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
+          </svg>
+        </div>
+      </div>
+
+      <p class="phone-modal-caption">This number works from any keypad (feature) phone — no smartphone or internet
+        needed.</p>
+    </div>
+  </div>
+  <script>
+    const tollFreeFab = document.getElementById('tollFreeFab');
+    const phoneModalOverlay = document.getElementById('phoneModalOverlay');
+    const phoneModalClose = document.getElementById('phoneModalClose');
+
+    tollFreeFab.addEventListener('click', () => {
+      phoneModalOverlay.classList.add('open');
+    });
+
+    phoneModalClose.addEventListener('click', () => {
+      phoneModalOverlay.classList.remove('open');
+    });
+
+    phoneModalOverlay.addEventListener('click', (e) => {
+      if (e.target === phoneModalOverlay) {
+        phoneModalOverlay.classList.remove('open');
+      }
+    });
+  </script>
+</body>
+
+</html>

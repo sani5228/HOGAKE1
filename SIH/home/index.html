@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FASAL — Login</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="script.js" defer></script>
+</head>
+<body>
+
+
+
+<div class="topbar">
+  <a href="home.html" class="home-link">
+    Back to home</a>
+</div>
+<div class="lang-wrap" id="langWrap">
+  <button class="lang-btn" id="langBtn" aria-haspopup="true" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+      <circle cx="12" cy="12" r="9"/>
+      <path d="M3 12h18M12 3c2.4 2.6 3.6 5.7 3.6 9s-1.2 6.4-3.6 9c-2.4-2.6-3.6-5.7-3.6-9s1.2-6.4 3.6-9z"/>
+    </svg>
+    <span id="langBtnLabel">EN</span>
+  </button>
+  <div class="lang-menu" id="langMenu"></div>
+</div>
+
+<div class="page-center">
+<div class="wrap">
+  <div class="brand-row">
+    <svg viewBox="0 0 24 24" fill="none">
+      <path d="M12 2C12 2 6 6.5 6 12.5C6 16.09 8.69 19 12 19C15.31 19 18 16.09 18 12.5C18 6.5 12 2 12 2Z" fill="#4E7A38"/>
+      <path d="M12 19V22" stroke="#4E7A38" stroke-width="1.6" stroke-linecap="round"/>
+    </svg>
+    <h1>FASAL</h1>
+  </div>
+
+  <div class="card">
+
+    <!-- STEP 1: Name + Aadhaar + Phone -->
+    <div class="step active" id="step1">
+      <div class="step-title">Login</div>
+      <div class="step-sub">Enter your details to get started with FASAL.</div>
+
+      <div class="field" id="nameField">
+        <label for="fullName">Full name</label>
+        <input type="text" id="fullName" placeholder="e.g. Aditi Mishra" autocomplete="name">
+        <div class="err">Please enter your full name.</div>
+      </div>
+
+      <div class="field" id="aadhaarField">
+        <label for="aadhaar">Aadhaar card number</label>
+        <input type="text" id="aadhaar" placeholder="12-digit Aadhaar number" maxlength="12" inputmode="numeric">
+        <div class="hint">Used to verify your identity as a registered farmer.</div>
+        <div class="err">Enter a valid 12-digit Aadhaar number.</div>
+      </div>
+
+      <div class="field" id="phoneField">
+        <label for="phone">Phone number</label>
+        <input type="tel" id="phone" placeholder="10-digit mobile number" maxlength="10" autocomplete="tel">
+        <div class="hint">Must be the mobile number registered with your Aadhaar.</div>
+        <div class="err">Enter a valid 10-digit phone number.</div>
+      </div>
+
+      <button class="btn" id="getOtpBtn">Get OTP</button>
+    </div>
+
+    <!-- STEP 2: OTP -->
+    <div class="step" id="step2">
+      <div class="step-title">Verify your number</div>
+      <div class="step-sub">We've sent a one-time code to <span id="phoneEcho"></span>.</div>
+
+      <div class="field" id="otpField">
+        <label for="otp">Enter OTP</label>
+        <input type="text" id="otp" placeholder="6-digit code" maxlength="6">
+        <div class="hint">Demo mode — enter any 6 digits to continue.</div>
+        <div class="err">Enter a valid 6-digit OTP.</div>
+      </div>
+
+      <button class="btn" id="verifyOtpBtn">Verify &amp; continue</button>
+      <a class="back-link" id="backTo1">&larr; Back</a>
+    </div>
+
+    <!-- STEP 3: Create password -->
+    <div class="step" id="step3">
+      <div class="step-title">Set your password</div>
+      <div class="step-sub">Your FARM ID has been generated automatically.</div>
+
+      <div class="uid-display">
+        <div>
+          <span class="uid-label">Your FARM ID</span>
+          <span class="uid-text" id="uidText"></span>
+        </div>
+        <span class="uid-tag">Auto-generated</span>
+      </div>
+
+      <div class="field" id="pwField">
+        <label for="password">Create password</label>
+        <input type="password" id="password" placeholder="At least 6 characters" autocomplete="new-password">
+        <div class="err">Password must be at least 6 characters.</div>
+      </div>
+
+      <div class="field" id="pwConfirmField">
+        <label for="passwordConfirm">Confirm password</label>
+        <input type="password" id="passwordConfirm" placeholder="Re-enter your password" autocomplete="new-password">
+        <div class="err">Passwords do not match.</div>
+      </div>
+
+      <button class="btn" id="createAccountBtn">Create account</button>
+    </div>
+
+    <!-- STEP 4: Success -->
+    <div class="step success" id="step4">
+      <div class="success-icon">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M5 13l4 4L19 7" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="step-title">Account created successfully</div>
+      <div class="step-sub">Welcome to FASAL, <span id="nameEcho"></span>. You can now view your farm profile.</div>
+
+      <div class="uid-display">
+        <div>
+          <span class="uid-label">FARM ID</span>
+          <span class="uid-text" id="uidFinal"></span>
+        </div>
+      </div>
+
+      
+        <a href="dash.html" class="btn">View profile</a>
+      
+      <a href="home.html" class="home-cta">Back to FASAL home</a>
+    </div>
+
+  </div>
+</div>
+</div>
+</body>
+</html>

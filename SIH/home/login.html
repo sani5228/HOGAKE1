@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FASAL — Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="login.css">
+  <script src="login.js" defer></script>
+</head>
+
+<body>
+
+  <div class="sun"></div>
+
+  <div class="cloud-drift">
+    <svg class="cd-a" viewBox="0 0 160 60" fill="none">
+      <ellipse cx="40" cy="38" rx="34" ry="18" fill="#CFE6F5" />
+      <ellipse cx="80" cy="28" rx="40" ry="22" fill="#CFE6F5" />
+      <ellipse cx="120" cy="38" rx="30" ry="16" fill="#CFE6F5" />
+    </svg>
+    <svg class="cd-b" viewBox="0 0 160 60" fill="none">
+      <ellipse cx="40" cy="38" rx="34" ry="18" fill="#CFE6F5" />
+      <ellipse cx="80" cy="28" rx="40" ry="22" fill="#CFE6F5" />
+      <ellipse cx="120" cy="38" rx="30" ry="16" fill="#CFE6F5" />
+    </svg>
+    <svg class="cd-c" viewBox="0 0 160 60" fill="none">
+      <ellipse cx="40" cy="38" rx="34" ry="18" fill="#CFE6F5" />
+      <ellipse cx="80" cy="28" rx="40" ry="22" fill="#CFE6F5" />
+      <ellipse cx="120" cy="38" rx="30" ry="16" fill="#CFE6F5" />
+    </svg>
+    <svg class="cd-d" viewBox="0 0 160 60" fill="none">
+      <ellipse cx="40" cy="38" rx="34" ry="18" fill="#CFE6F5" />
+      <ellipse cx="80" cy="28" rx="40" ry="22" fill="#CFE6F5" />
+      <ellipse cx="120" cy="38" rx="30" ry="16" fill="#CFE6F5" />
+    </svg>
+  </div>
+
+  <div class="topbar">
+    <a href="home.html" class="home-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round">
+        <path d="M15 18l-6-6 6-6" />
+      </svg>
+      Back to home
+    </a>
+    <div class="lang-wrap" id="langWrap">
+      <button class="lang-btn" id="langBtn" aria-haspopup="true" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M3 12h18M12 3c2.4 2.6 3.6 5.7 3.6 9s-1.2 6.4-3.6 9c-2.4-2.6-3.6-5.7-3.6-9s1.2-6.4 3.6-9z" />
+        </svg>
+        <span id="langBtnLabel">EN</span>
+      </button>
+      <div class="lang-menu" id="langMenu"></div>
+    </div>
+  </div>
+
+  <div class="page-center">
+    <div class="wrap">
+      <div class="brand-row">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 2C12 2 6 6.5 6 12.5C6 16.09 8.69 19 12 19C15.31 19 18 16.09 18 12.5C18 6.5 12 2 12 2Z"
+            fill="#4E7A38" />
+          <path d="M12 19V22" stroke="#4E7A38" stroke-width="1.6" stroke-linecap="round" />
+        </svg>
+        <h1>FASAL</h1>
+      </div>
+
+      <div class="card">
+        <div class="step-title" data-i18n="login_title">Welcome back</div>
+        <div class="step-sub" data-i18n="login_sub">Log in to view your profile and farm dashboard.</div>
+
+        <form id="loginForm" novalidate>
+          <div class="field" id="usernameField">
+            <label for="username" data-i18n="login_username">FARM ID / Username</label>
+            <input type="text" id="username" placeholder="e.g. aditimishra1234" autocomplete="username">
+            <div class="err" data-i18n="login_username_err">Please enter your FARM ID or username.</div>
+          </div>
+
+          <div class="field" id="passwordField">
+            <label for="password" data-i18n="login_password">Password</label>
+            <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password">
+            <div class="err" data-i18n="login_password_err">Please enter your password.</div>
+          </div>
+
+          <div class="row-between">
+            <label class="remember">
+              <input type="checkbox" id="remember">
+              Remember me
+            </label>
+            <a href="#" class="forgot-link" data-i18n="login_forgot">Forgot password?</a>
+          </div>
+
+          <a href="dash.html" class="btn-submit" id="loginBtn" data-i18n="login_submit">Log in</a>
+        </form>
+
+        <div class="signup-line">
+          Don't have an account? <a href="registration.html" data-i18n="login_signup">Register here</a>
+        </div>
+
+        <div class="demo-hint" data-i18n="login_demo ">Demo mode — any username and password will log you in.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('loginForm');
+    const usernameField = document.getElementById('usernameField');
+    const passwordField = document.getElementById('passwordField');
+
+    // prefill FARM ID if arriving fresh from registration
+    const prefill = new URLSearchParams(window.location.search).get('user');
+    if (prefill) {
+      document.getElementById('username').value = prefill;
+    }
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+
+      const usernameValid = username.length > 0;
+      const passwordValid = password.length > 0;
+
+      usernameField.classList.toggle('invalid', !usernameValid);
+      passwordField.classList.toggle('invalid', !passwordValid);
+
+      if (!usernameValid || !passwordValid) return;
+
+      // demo-only: no real auth backend, so any credentials pass
+      window.location.href = 'dashboard.html?user=' + encodeURIComponent(username);
+    });
+  </script>
+  <script src="i18n.js"></script>
+<script>
+  const LOGIN_STRINGS = {
+    en: { login_title: "Welcome back", login_sub: "Log in to view your profile and farm dashboard.", login_username_label: "FARM ID / Username", login_btn: "Log in" },
+    hi: { login_title: "वापसी पर स्वागत है", login_sub: "अपनी प्रोफ़ाइल और डैशबोर्ड देखने के लिए लॉग इन करें।", login_username_label: "फार्म आईडी / उपयोगकर्ता नाम", login_btn: "लॉग इन करें" },
+    ta: { login_title: "மீண்டும் வரவேற்கிறோம்", login_sub: "உங்கள் சுயவிவரம் மற்றும் டாஷ்போர்டைப் பார்க்க உள்நுழையவும்.", login_username_label: "பண்ணை ஐடி / பயனர்பெயர்", login_btn: "உள்நுழை" },
+    pa: { login_title: "ਵਾਪਸ ਸੁਆਗਤ ਹੈ", login_sub: "ਆਪਣੀ ਪ੍ਰੋਫਾਈਲ ਅਤੇ ਡੈਸ਼ਬੋਰਡ ਵੇਖਣ ਲਈ ਲੌਗ ਇਨ ਕਰੋ।", login_username_label: "ਫਾਰਮ ਆਈਡੀ / ਯੂਜ਼ਰਨੇਮ", login_btn: "ਲੌਗ ਇਨ" },
+    as: { login_title: "পুনৰ স্বাগতম", login_sub: "আপোনাৰ প্ৰ'ফাইল আৰু ডেশ্ববৰ্ড চাবলৈ লগইন কৰক।", login_username_label: "ফাৰ্ম আইডি / ব্যৱহাৰকাৰীৰ নাম", login_btn: "লগইন" },
+    te: { login_title: "తిరిగి స్వాగతం", login_sub: "మీ ప్రొఫైల్ మరియు డాష్‌బోర్డ్‌ను చూడటానికి లాగిన్ అవ్వండి.", login_username_label: "ఫారమ్ ఐడీ / యూజర్‌నేమ్", login_btn: "లాగిన్" },
+  };
+  initFasalLanguageSwitcher(LOGIN_STRINGS, 'en');
+</script>
+
+</body>
+
+</html>
