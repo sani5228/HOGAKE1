@@ -28,6 +28,45 @@
         <li><a href="farmer/login.html">Farmer Portal</a></li>
         <li><a href="center/login.html">Center Portal</a></li>
         <li><a href="admin/login.html">Admin</a></li>
+
+        <!-- CHANGE 2: Farmer Services dropdown (desktop) -->
+        <li class="services-wrap" id="servicesWrap">
+          <button class="services-btn" id="servicesBtn" type="button"
+                  aria-haspopup="true" aria-expanded="false" data-i18n="nav_services">
+            🌾 Farmer Services <span class="caret">▾</span>
+          </button>
+          <div class="services-menu" id="servicesMenu" role="menu" aria-label="Farmer Services">
+            <a href="https://www.enam.gov.in/web/" target="_blank" rel="noopener noreferrer" role="menuitem">
+              <span class="svc-icon">🌾</span>
+              <span class="svc-text"><strong>e-NAM</strong><small>National Agriculture Market</small></span>
+            </a>
+            <a href="https://pmkisan.gov.in/" target="_blank" rel="noopener noreferrer" role="menuitem">
+              <span class="svc-icon">💰</span>
+              <span class="svc-text"><strong>PM-KISAN</strong><small>Farmer income support scheme</small></span>
+            </a>
+            <a href="https://pmfby.gov.in/" target="_blank" rel="noopener noreferrer" role="menuitem">
+              <span class="svc-icon">🛡️</span>
+              <span class="svc-text"><strong>PMFBY</strong><small>Crop insurance scheme</small></span>
+            </a>
+            <a href="https://soilhealth.dac.gov.in/" target="_blank" rel="noopener noreferrer" role="menuitem">
+              <span class="svc-icon">🌱</span>
+              <span class="svc-text"><strong>Soil Health Card</strong><small>Soil testing &amp; recommendations</small></span>
+            </a>
+            <a href="https://agmarknet.gov.in/" target="_blank" rel="noopener noreferrer" role="menuitem">
+              <span class="svc-icon">📊</span>
+              <span class="svc-text"><strong>Agmarknet</strong><small>Mandi / market prices</small></span>
+            </a>
+            <a href="https://fci.gov.in/" target="_blank" rel="noopener noreferrer" role="menuitem">
+              <span class="svc-icon">🏛️</span>
+              <span class="svc-text"><strong>FCI</strong><small>Food Corporation of India</small></span>
+            </a>
+            <a href="https://dackkms.gov.in/" target="_blank" rel="noopener noreferrer" role="menuitem">
+              <span class="svc-icon">📞</span>
+              <span class="svc-text"><strong>Kisan Call Centre</strong><small>Agricultural assistance for farmers</small></span>
+            </a>
+          </div>
+        </li>
+
         <li><a href="javascript:void(0)" onclick="document.getElementById('ivrFloatBtn').click()">1800-FASAL (IVR)</a></li>
       </ul>
 
@@ -56,6 +95,23 @@
       <li><a href="farmer/login.html">Farmer Portal</a></li>
       <li><a href="center/login.html">Center Portal</a></li>
       <li><a href="admin/login.html">Admin Portal</a></li>
+
+      <!-- CHANGE 2: Farmer Services (mobile, expand/collapse) -->
+      <li class="mobile-services">
+        <button class="mobile-services-toggle" id="mobileServicesToggle" type="button" aria-expanded="false" aria-controls="mobileServicesList">
+          <span data-i18n="nav_services">🌾 Farmer Services</span> <span class="caret">▾</span>
+        </button>
+        <ul class="mobile-services-list" id="mobileServicesList">
+          <li><a href="https://www.enam.gov.in/web/" target="_blank" rel="noopener noreferrer">→ e-NAM</a></li>
+          <li><a href="https://pmkisan.gov.in/" target="_blank" rel="noopener noreferrer">→ PM-KISAN</a></li>
+          <li><a href="https://pmfby.gov.in/" target="_blank" rel="noopener noreferrer">→ PMFBY</a></li>
+          <li><a href="https://soilhealth.dac.gov.in/" target="_blank" rel="noopener noreferrer">→ Soil Health Card</a></li>
+          <li><a href="https://agmarknet.gov.in/" target="_blank" rel="noopener noreferrer">→ Agmarknet</a></li>
+          <li><a href="https://fci.gov.in/" target="_blank" rel="noopener noreferrer">→ FCI</a></li>
+          <li><a href="https://dackkms.gov.in/" target="_blank" rel="noopener noreferrer">→ Kisan Call Centre</a></li>
+        </ul>
+      </li>
+
       <li><a href="javascript:void(0)" onclick="document.getElementById('ivrFloatBtn').click()">Toll-Free IVR (1800-FASAL)</a></li>
     </ul>
     <a href="farmer/register.html" class="btn-register" data-i18n="nav_register">Farmer Register</a>
