@@ -1,4 +1,4 @@
-  const LANGS = [
+const LANGS = [
     { code: 'en', native: 'English' },
     { code: 'hi', native: 'हिन्दी' },
     { code: 'ta', native: 'தமிழ்' },
@@ -10,6 +10,7 @@
   const STRINGS = {
     en: {
       nav_home: "Home", nav_about: "About", nav_contact: "Contact", nav_help: "Help", nav_register: "Registration",
+      nav_services: "🌾 Farmer Services",
       lang_label: "Choose language",
       hero_kicker: "For growers, by growers",
       hero_title: "Plan your harvest with clarity",
@@ -30,6 +31,7 @@
     },
     hi: {
       nav_home: "होम", nav_about: "हमारे बारे में", nav_contact: "संपर्क", nav_help: "सहायता", nav_register: "पंजीकरण",
+      nav_services: "🌾 किसान सेवाएं",
       lang_label: "भाषा चुनें",
       hero_kicker: "किसानों के लिए, किसानों द्वारा",
       hero_title: "अपनी फसल की योजना स्पष्टता से बनाएं",
@@ -50,6 +52,7 @@
     },
     ta: {
       nav_home: "முகப்பு", nav_about: "எங்களைப் பற்றி", nav_contact: "தொடர்பு", nav_help: "உதவி", nav_register: "பதிவு",
+      nav_services: "🌾 விவசாயி சேவைகள்",
       lang_label: "மொழியைத் தேர்ந்தெடுக்கவும்",
       hero_kicker: "விவசாயிகளுக்காக, விவசாயிகளால்",
       hero_title: "உங்கள் அறுவடையை தெளிவாகத் திட்டமிடுங்கள்",
@@ -70,6 +73,7 @@
     },
     pa: {
       nav_home: "ਹੋਮ", nav_about: "ਸਾਡੇ ਬਾਰੇ", nav_contact: "ਸੰਪਰਕ", nav_help: "ਮਦਦ", nav_register: "ਰਜਿਸਟ੍ਰੇਸ਼ਨ",
+      nav_services: "🌾 ਕਿਸਾਨ ਸੇਵਾਵਾਂ",
       lang_label: "ਭਾਸ਼ਾ ਚੁਣੋ",
       hero_kicker: "ਕਿਸਾਨਾਂ ਲਈ, ਕਿਸਾਨਾਂ ਵੱਲੋਂ",
       hero_title: "ਆਪਣੀ ਫ਼ਸਲ ਦੀ ਯੋਜਨਾ ਸਪਸ਼ਟਤਾ ਨਾਲ ਬਣਾਓ",
@@ -90,6 +94,7 @@
     },
     as: {
       nav_home: "গৃহ", nav_about: "আমাৰ বিষয়ে", nav_contact: "যোগাযোগ", nav_help: "সহায়", nav_register: "পঞ্জীয়ন",
+      nav_services: "🌾 কৃষক সেৱাসমূহ",
       lang_label: "ভাষা বাছক",
       hero_kicker: "কৃষকৰ বাবে, কৃষকৰ দ্বাৰা",
       hero_title: "স্পষ্টতাৰে আপোনাৰ শস্যৰ পৰিকল্পনা কৰক",
@@ -110,6 +115,7 @@
     },
     te: {
       nav_home: "హోమ్", nav_about: "మా గురించి", nav_contact: "సంప్రదించండి", nav_help: "సహాయం", nav_register: "నమోదు",
+      nav_services: "🌾 రైతు సేవలు",
       lang_label: "భాషను ఎంచుకోండి",
       hero_kicker: "రైతుల కోసం, రైతుల చేత",
       hero_title: "మీ పంటను స్పష్టతతో ప్రణాళిక చేయండి",
@@ -136,7 +142,15 @@
     const dict = STRINGS[code] || STRINGS.en;
     document.querySelectorAll('[data-i18n]').forEach(el => {
       const key = el.getAttribute('data-i18n');
-      if (dict[key]) el.textContent = dict[key];
+      if (dict[key]) {
+        // Buttons with an inner <span class="caret"> must keep the caret intact,
+        // so only replace the text node content, not the whole innerHTML.
+        if (el.querySelector('.caret')) {
+          el.childNodes[0].nodeValue = dict[key] + ' ';
+        } else {
+          el.textContent = dict[key];
+        }
+      }
     });
     document.getElementById('htmlRoot').setAttribute('lang', code);
     document.getElementById('langBtnLabel').textContent = code.toUpperCase();
@@ -172,7 +186,7 @@
 
   applyLang('en');
 
-  // ---- dropdown toggle ----
+  // ---- dropdown toggle (language) ----
   const langWrap = document.getElementById('langWrap');
   const langBtn = document.getElementById('langBtn');
 
@@ -189,6 +203,44 @@
       langBtn.setAttribute('aria-expanded', 'false');
     }
   });
+
+  // ---- Farmer Services dropdown (desktop) ----
+  const servicesWrap = document.getElementById('servicesWrap');
+  const servicesBtn = document.getElementById('servicesBtn');
+
+  if (servicesWrap && servicesBtn) {
+    servicesBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const isOpen = servicesWrap.classList.toggle('open');
+      servicesBtn.setAttribute('aria-expanded', isOpen);
+    });
+
+    servicesBtn.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        servicesWrap.classList.remove('open');
+        servicesBtn.setAttribute('aria-expanded', 'false');
+        servicesBtn.blur();
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!servicesWrap.contains(e.target)) {
+        servicesWrap.classList.remove('open');
+        servicesBtn.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+
+  // ---- Farmer Services (mobile) expand/collapse ----
+  const mobileServicesToggle = document.getElementById('mobileServicesToggle');
+  const mobileServicesList = document.getElementById('mobileServicesList');
+
+  if (mobileServicesToggle && mobileServicesList) {
+    mobileServicesToggle.addEventListener('click', () => {
+      const isOpen = mobileServicesList.classList.toggle('open');
+      mobileServicesToggle.setAttribute('aria-expanded', isOpen);
+    });
+  }
 
   // ---- attention highlight + tooltip ----
   function dismissTooltip() {
@@ -220,7 +272,7 @@
     }
   });
 
-  panel.querySelectorAll('a').forEach(link => {
+  panel.querySelectorAll('ul > li > a').forEach(link => {
     link.addEventListener('click', () => {
       panel.classList.remove('open');
       hamburger.setAttribute('aria-expanded', 'false');
